@@ -1,0 +1,183 @@
+#!/bin/sh
+''':'
+# sh reads up to "exit": it hands this file to the first of python and python3 that starts (on Windows either name
+# can be only the Microsoft Store stub, which does not start). Python reads the same lines as one string.
+for p in python python3; do
+  "$p" -c "import sys; sys.exit(sys.version_info < (3, 9))" >/dev/null 2>&1 && exec "$p" "$0" "$@"
+done
+echo "pre-commit: neither python nor python3 is Python 3.9 or newer here; install Python 3.9 or newer." >&2
+echo "pre-commit：python 和 python3 都不是 Python 3.9 或更新的版本，请安装 Python 3.9 或更新的版本。" >&2
+exit 1
+'''
+# Stops a commit that would put the player's game files, keys, signing material, built packages or this PC's settings
+# into git. 提交前检查：游戏文件、密钥、签名材料、打好的包和本机设置不进仓库。
+#
+# Turn it on once per clone:  git config core.hooksPath .githooks
+# It looks at what is staged (git diff --cached), whichever tool makes the commit, files added with git add -f too:
+# the names (BLOCKED), the size (LIMIT) and, in text files, lines that hold keys (KEY_LINE). Removing such a file
+# from the repository is allowed.
+import re
+import subprocess
+import sys
+
+# (what it is, pattern on the staged path with / separators), case ignored
+BLOCKED = [
+    ("keys / 密钥", r"\.keys?(\.[^/]*)?$|(^|/)\.switch/"),
+    ("game files / 游戏文件", r"\.(nsp|nsz|xci|xcz|nup|nca|ncz|tik|nso|nro|npdm)$"),
+    ("extracted game folder / 解出的游戏文件夹", r"(^|/)(romfs|exefs)(/|$)"),
+    ("game data for the phone / 给手机的游戏数据",
+     r"(^|/)game-[^/]+/|(^|/)shared[-_]fonts/|(^|/)romfs[^/]*\.(bin|img)$|(^|/)runtime-(index|tables)\.bin$"),
+    ("system fonts / 系统字体", r"\.(bfttf|bfotf)$"),
+    ("shader seed / 着色器种子", r"\.vkpack$"),
+    ("game save / 游戏存档", r"\.sav$"),
+    ("built package, program or library / 打好的包、程序或库", r"\.(hap|hsp|app|exe|dll|so|a)$"),
+    ("archive / 压缩包", r"\.(zip|7z|rar)$"),
+    ("signing material / 签名材料", r"\.(p12|pfx|p7b|cer|csr|jks|pem|keystore)$|(^|/)build-profile\.json5(\.[^/]*)?$"
+                                    r"|(^|/)(account|key)\.dat(\.[^/]*)?$|(^|/)material/|(^|/)\.(nx2h|ohos)/"),
+    ("this PC's settings / 本机设置", r"(^|/)nx2h\.local\.json(\.[^/]*)?$|(^|/)local\.ohos\.(env|ps1)(\.[^/]*)?$"
+                                     r"|(^|/)local\.properties$|(^|/)\.env(\.[^/]*)?$"),
+    ("made from game files, or build output / 由游戏文件生成的内容或构建输出",
+     r"(^|/)(prepared|artifacts|signing|work|logs|dist|build)/"),
+    ("log file / 日志", r"\.log$"),
+    ("NX2's backend patches, which quote the projects' original lines / NX2 的后端补丁（引着原工程的原始行）",
+     r"^backends/patches/"),
+    ("a leftover of a patch that did not apply / 没打上的补丁留下的文件", r"\.(rej|orig)$"),
+]
+BLOCKED = [(what, re.compile(rx, re.I)) for what, rx in BLOCKED]
+# backends/ (packaging/backend_import.py): a backend's module build file, which holds no signing (check() reads it to
+# be sure), and the prebuilt third-party libraries every backend links (backends/prebuilt-ohos, built from source)
+ALLOWED = [re.compile(r"^backends/[^/]+/entry/build-profile\.json5$"), re.compile(r"^backends/prebuilt-ohos/.+\.a$")]
+SIGNING_INSIDE = re.compile(rb'"(storeFile|storePassword|keyPassword|keyAlias|certpath|profile)"\s*:')
+SIGNING = "signing material / 签名材料"
+# what a build in a backend folder leaves in tracked files when it is stopped before it puts them back: a bundle name
+# made on this PC (nx2h/bundle.py; nx2h.u000000 is the neutral one, nx2h.uk3f9a2 the documented example) and the
+# game's icon over the backend's own pictures (only pictures packaging/bundle_pictures.tsv lists may be committed)
+PC_BUNDLE = re.compile(rb"\bnx2h\.u(?!000000\.|k3f9a2\.)[0-9a-z]{6}\.")
+PC_BUNDLE_INSIDE = "a bundle name made on this PC (a stopped build's leftover) / 本机生成的包名（中断的构建留下的）"
+PICTURE = re.compile(r"\.(png|jpe?g|webp|bmp|gif|svg|ico)$", re.I)
+UNLISTED = "a picture not in packaging/bundle_pictures.tsv / 没登记在 packaging/bundle_pictures.tsv 的图片"
+
+
+def listed_pictures():
+    """The sha256 of every picture packaging/bundle_pictures.tsv lists (the staged copy when there is one)."""
+    try:
+        text = git("show", ":packaging/bundle_pictures.tsv").decode("utf-8", "replace")
+    except subprocess.CalledProcessError:
+        return set()
+    return {ln.split("\t", 1)[0].strip().lower() for ln in text.splitlines() if ln.strip() and not ln.startswith("#")}
+
+LIMIT = 20 * 1024 * 1024
+TOO_LARGE = "over 20 MB / 超过 20 MB"
+# A line of prod.keys (header_key, key_area_key_*, titlekek_*, master_key_*, ... = 32 or more hex digits) or of
+# title.keys (rights ID = title key), whatever the file is called.
+KEY_LINE = re.compile(rb"(?im)^[ \t]*(?:[a-z0-9_]*ke[ky][a-z0-9_]*|[a-z0-9_]+_source)[ \t]*[=:][ \t]*[0-9a-f]{32,}"
+                      rb"(?![0-9a-z])|^[ \t]*[0-9a-f]{32}[ \t]*=[ \t]*[0-9a-f]{32}(?![0-9a-z])")
+KEYS_INSIDE = "keys inside the file / 文件里有密钥"
+
+
+def why(path):
+    """What a staged path is, when its name says it must stay out of git; None for an ordinary file."""
+    p = path.replace("\\", "/")
+    if any(rx.search(p) for rx in ALLOWED):
+        return None
+    return next((what for what, rx in BLOCKED if rx.search(p)), None)
+
+
+def holds_keys(data):
+    """True for a text file (no NUL byte near the start) with a key line in it."""
+    return b"\0" not in data[:8000] and KEY_LINE.search(data) is not None
+
+
+def git(*args, data=None):
+    return subprocess.run(["git", *args], input=data, capture_output=True, check=True).stdout
+
+
+def staged_paths():
+    # -z: paths as they are (no quoting of non-ASCII names); ACMRT: what the commit adds or changes, not deletions
+    out = git("diff", "--cached", "--name-only", "--diff-filter=ACMRT", "-z")
+    return [p.decode("utf-8", "surrogateescape") for p in out.split(b"\0") if p]
+
+
+def staged_ids():
+    """path -> id of the file the index holds for it (a submodule's commit left out)."""
+    ids = {}
+    for rec in git("ls-files", "--stage", "-z").split(b"\0"):
+        meta, tab, path = rec.partition(b"\t")
+        fields = meta.split()
+        if tab and len(fields) == 3 and fields[0] != b"160000":
+            ids[path.decode("utf-8", "surrogateescape")] = fields[1].decode("ascii")
+    return ids
+
+
+def sizes(ids):
+    """id -> size in bytes, all in one git call."""
+    out = git("cat-file", "--batch-check", data="".join(i + "\n" for i in ids).encode("ascii"))
+    found = {}
+    for line in out.decode("ascii", "replace").splitlines():
+        f = line.split()
+        if len(f) == 3 and f[2].isdigit():
+            found[f[0]] = int(f[2])
+    return found
+
+
+def contents(ids):
+    """id -> bytes, all in one git call."""
+    out = git("cat-file", "--batch", data="".join(i + "\n" for i in ids).encode("ascii"))
+    found, at = {}, 0
+    while at < len(out):
+        end = out.index(b"\n", at)
+        f = out[at:end].split()
+        at = end + 1
+        if len(f) == 3 and f[2].isdigit():   # "<id> <type> <size>", the data, "\n"; else "<id> missing"
+            n = int(f[2])
+            found[f[0].decode("ascii")] = out[at:at + n]
+            at += n + 1
+    return found
+
+
+def check(paths):
+    """[(path, what it is)] for the staged paths that must stay out of git, by name, then size, then content."""
+    bad = [(p, why(p)) for p in paths if why(p)]
+    index = staged_ids()
+    ids = {p: index[p] for p in paths if not why(p) and p in index}
+    size = sizes(set(ids.values()))
+    big = {p for p, i in ids.items() if size.get(i, 0) > LIMIT}
+    bad += [(p, TOO_LARGE) for p in big]
+    data = contents({i for p, i in ids.items() if p not in big})
+    bad += [(p, KEYS_INSIDE) for p, i in ids.items() if p not in big and holds_keys(data.get(i, b""))]
+    bad += [(p, SIGNING) for p, i in ids.items() if p not in big and p.lower().endswith("build-profile.json5")
+            and SIGNING_INSIDE.search(data.get(i, b""))]
+    ours = {p: i for p, i in ids.items() if p.startswith("backends/") and p not in big}
+    bad += [(p, PC_BUNDLE_INSIDE) for p, i in ours.items()
+            if b"\0" not in data.get(i, b"")[:8000] and PC_BUNDLE.search(data.get(i, b""))]
+    pictures = {p: i for p, i in ours.items() if PICTURE.search(p) and "/prebuilt-ohos/" not in p}
+    if pictures:
+        import hashlib
+        ok = listed_pictures()
+        bad += [(p, UNLISTED) for p, i in pictures.items() if hashlib.sha256(data.get(i, b"")).hexdigest() not in ok]
+    return sorted(bad)
+
+
+def main():
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except (AttributeError, ValueError):
+        pass
+    try:
+        bad = check(staged_paths())
+    except (OSError, ValueError, subprocess.CalledProcessError) as e:
+        print(f"pre-commit: could not read what is staged / 读不到暂存的内容：{e}", file=sys.stderr)
+        return 1
+    if not bad:
+        return 0
+    print("Commit stopped: game files, keys, signing material, packages and this PC's settings never go into this "
+          "repository, nor does any file over 20 MB.", file=sys.stderr)
+    print("提交被拦下：游戏文件、密钥、签名材料、打好的包和本机设置不能进这个仓库，超过 20 MB 的文件也不行。", file=sys.stderr)
+    for path, what in bad:
+        print(f"  {path}    ({what})", file=sys.stderr)
+    print("Unstage them with / 取消暂存：git restore --staged <path>", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

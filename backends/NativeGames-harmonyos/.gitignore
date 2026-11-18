@@ -1,0 +1,31 @@
+# local build state
+.hvigor/
+.idea/
+oh_modules/
+local.properties
+/build-profile.json5
+build/
+entry/build/
+entry/.cxx/
+entry/libs/
+# everything derived from the player's game files, and signing material: never committed
+artifacts/
+prepared/
+inputs/
+signing/
+*.p12
+*.p7b
+*.cer
+*.csr
+*.hap
+*.app
+*.so
+*.nso
+*.xci
+*.nsp
+*.nsz
+*.keys
+# this machine's settings
+native-harmonyos/local.ohos.ps1
+native-harmonyos/local.ohos.env
+__pycache__/

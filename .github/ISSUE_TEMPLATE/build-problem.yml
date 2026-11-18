@@ -1,0 +1,104 @@
+name: Build problem / 构建问题
+description: A build, signing, install or first start on the phone stopped. 构建、签名、安装或手机上第一次启动停下了。
+title: "Build problem: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never attach** game files (.xci .xcz .nsp .nsz .nup), keys (prod.keys, title.keys), firmware, signing files (.p12 .p7b .cer .csr, build-profile.json5), nx2h.local.json, game data from prepared\ or the phone, or the HAP, not even zipped. Before pasting log lines, replace with `***`: your Windows user name, IP addresses, the phone's serial number, your Huawei account and team name, e-mail addresses, and the middle part of the bundle name (nx2h.***.totk).
+
+        **不要附上**游戏文件（.xci .xcz .nsp .nsz .nup）、密钥（prod.keys、title.keys）、固件、签名文件（.p12 .p7b .cer .csr、build-profile.json5）、nx2h.local.json、prepared\ 里或手机上的游戏数据，以及 HAP，压缩后也不要。贴日志之前，把这些换成 `***`：你的 Windows 用户名、IP 地址、手机序列号、华为账号和团队名、邮箱地址，以及包名中间那一段（nx2h.***.totk）。
+  - type: dropdown
+    id: game
+    attributes:
+      label: Game and version / 游戏和版本
+      options:
+        - "Tears of the Kingdom 1.4.3 / 塞尔达传说 王国之泪 1.4.3"
+        - "Ocarina of Time v131072, Switch 2 / 塞尔达传说 时之笛 v131072（Switch 2）"
+        - "Pokémon Legends: Z-A 2.0.2, Switch 2 Edition / 宝可梦传说 Z-A 2.0.2（Switch 2 Edition）"
+    validations:
+      required: true
+  - type: dropdown
+    id: files
+    attributes:
+      label: Your game files / 你的游戏文件
+      description: The forms you gave the build. 你给构建用的文件格式。
+      multiple: true
+      options:
+        - "XCI (card image) / XCI（卡带镜像）"
+        - "XCZ"
+        - "NSP"
+        - "NSZ"
+        - "NUP (Switch 2)"
+  - type: input
+    id: phone
+    attributes:
+      label: Phone model and HarmonyOS version / 手机型号和 HarmonyOS 版本
+      placeholder: "e.g. Mate 70 Pro, HarmonyOS 5.1.0 / 例如：Mate 70 Pro，HarmonyOS 5.1.0"
+    validations:
+      required: true
+  - type: input
+    id: pc
+    attributes:
+      label: Windows version and NX2Harmony version / Windows 版本和 NX2Harmony 版本
+      description: |
+        Windows: as `winver` shows it. NX2Harmony run from source: the commit (`git rev-parse --short HEAD`); the packed app: the version you got (for example 0.1.0), else the date you got it.
+        Windows：`winver` 里显示的版本。源码运行的 NX2Harmony：提交号（`git rev-parse --short HEAD`）；打包好的程序：你拿到的版本号（如 0.1.0），不知道就写拿到它的日期。
+      placeholder: "e.g. Windows 11 24H2, commit 1a2b3c4 / 例如：Windows 11 24H2，提交 1a2b3c4"
+    validations:
+      required: true
+  - type: dropdown
+    id: how
+    attributes:
+      label: How you built it / 怎么构建的
+      options:
+        - "The packed app (NX2Harmony.exe) / 打包好的程序（NX2Harmony.exe）"
+        - "From source (NX2Harmony.cmd) / 源码运行（NX2Harmony.cmd）"
+        - "Command line (python nx2h.py build, 一键构建.cmd) / 命令行（python nx2h.py build、一键构建.cmd）"
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Where it stopped / 停在哪里
+      options:
+        - "Environment check / 环境检查"
+        - "Reading the game files / 识别游戏文件"
+        - "Preparing the game (extract, merge, fonts, translator, rewrite, shader seed) / 准备游戏（解包、合并、字体、着色器翻译器、改写、着色器种子）"
+        - "Native libraries / 原生库"
+        - "HAP and signing / 打包和签名"
+        - "Install on the phone / 安装到手机"
+        - "Pushing the game data / 推送游戏数据"
+        - "Shader translation after the first start (Z-A) / 首次启动后的着色器翻译（Z-A）"
+        - "The game on the phone / 手机上的游戏"
+        - "Other / 其他"
+    validations:
+      required: true
+  - type: input
+    id: step
+    attributes:
+      label: The last step line shown / 最后显示的步骤
+      description: The step the window or the command line showed last. 窗口或命令行最后显示的那一步。
+      placeholder: "e.g. / 例如：着色器种子（首次约 3 分钟）"
+  - type: textarea
+    id: log
+    attributes:
+      label: Log lines / 日志
+      description: |
+        The last few dozen lines of the newest log, and every line that starts with [RED], with the parts listed at the top replaced by ***. The window's 「打开日志文件夹」 button opens the folder: data\logs beside NX2Harmony.exe for the packed app, logs\ in the checkout when run from source.
+        最新那份日志的最后几十行，以及所有以 [RED] 开头的行；开头列出的那些内容先换成 ***。窗口里的「打开日志文件夹」按钮会打开日志所在的文件夹：打包好的程序在 NX2Harmony.exe 旁边的 data\logs，源码运行在仓库里的 logs\。
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you tried (optional) / 已经试过什么（可选）
+  - type: checkboxes
+    id: nothing-private
+    attributes:
+      label: Nothing private attached / 没有附上私人内容
+      options:
+        - label: "I attached no game files, keys, firmware, signing files, game data or HAP, and the log lines name no user name, IP address, serial number, Huawei account or team, e-mail address or bundle name middle part. / 我没有附上游戏文件、密钥、固件、签名文件、游戏数据或 HAP，日志里也没有用户名、IP 地址、序列号、华为账号或团队名、邮箱地址或包名中间那一段。"
+          required: true

@@ -1,0 +1,80 @@
+# Everything made from the player's game files, keys or signing stays on this PC and out of the repository.
+/work/
+/logs/
+/prepared/
+/artifacts/
+nx2h.local.json*
+*.keys
+*.keys.*
+*.hap
+*.nsp
+*.nsz
+*.xci
+*.xcz
+*.nup
+*.nca
+*.ncz
+*.tik
+*.nso
+*.nro
+*.npdm
+*.sav
+*.log
+__pycache__/
+/build/
+/dist/
+/signing/
+# signing material: the app keeps its own in %USERPROFILE%\.nx2h, never in a checkout
+*.p12
+*.p7b
+*.cer
+*.csr
+*.jks
+# a project's signing configuration (a backend's module file entry/build-profile.json5 is source)
+/build-profile.json5
+/backends/*/build-profile.json5
+/backends/*/build-profile.json5.*
+*.pem
+*.pfx
+*.keystore
+*.key
+.env
+.env.*
+material/
+account.dat
+key.dat
+# local environments and outputs
+*.tmp
+*.zip
+.venv/
+venv/
+# working notes that are not project documentation
+/docs/PLAN-AI-PORT-2026-11-15.md
+# what a backend build writes inside backends/<folder> (each backend's own .gitignore covers most of it too)
+/backends/*/prepared/
+/backends/*/artifacts/
+/backends/*/inputs/
+/backends/*/build/
+/backends/*/entry/build/
+/backends/*/.hvigor/
+/backends/*/oh_modules/
+/backends/*/entry/oh_modules/
+/backends/*/entry/libs/
+/backends/*/.cxx/
+/backends/*/entry/.cxx/
+/backends/*/entry/.preview/
+/backends/*/.idea/
+/backends/*/.appanalyzer/
+/backends/*/local.properties
+/backends/*/native-harmonyos/local.ohos.env*
+/backends/*/native-harmonyos/local.ohos.ps1*
+*.so
+# the public upstreams the app fetches into backends/, pinned (backends/SOURCES.tsv, each backend's UPSTREAM_PIN)
+/backends/totk-android/
+/backends/nxnative/
+# NX2's patches to the backends: they quote the projects' original lines (backends/README.md)
+/backends/patches/
+# a build's stand-in for Tears of the Kingdom's vector icon (put back after the build); a patch's leftovers
+/backends/NativeGames-harmonyos/AppScope/resources/base/media/app_icon.png
+*.rej
+*.orig

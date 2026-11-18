@@ -1,0 +1,11 @@
+* text=auto
+# cmd.exe needs CRLF in batch files
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ico binary
+*.png binary
+# hooks and container scripts run in sh: LF on every checkout
+.githooks/* text eol=lf
+*.sh text eol=lf
+# licence texts ship byte for byte (tests check their sha256)
+packaging/licenses/** text eol=lf

@@ -1,0 +1,37 @@
+name: Tests
+
+# The unittest suite under tests/: no network, Docker, phone, keys, game files or PySide6 needed. git (and the sh that
+# Git for Windows brings) runs the pre-commit hook tests.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# a newer push to the same branch or pull request cancels the run still going (Windows minutes count double)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.9: the oldest Python the code keeps working on; 3.12: the one the packed app is built with
+        python-version: ['3.9', '3.12']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run the tests
+        # -I: neither the working folder nor PYTHON* variables change what is imported
+        run: python -I -m unittest discover -s tests -v

@@ -1,0 +1,11 @@
+# Where each folder of backends/ comes from (packaging/backend_import.py keeps the backends' rows).
+# revision: a commit of a git project, or snapshot-<digest of the files taken> for a working folder;
+# patch: NX2's own changes against that revision (kept on the maintainer's PC, not committed), - for none;
+# the public upstreams (nxnative, totk-android) are pinned here and fetched, not copied (totk-android
+# also in each backend's native-harmonyos/UPSTREAM_PIN).
+folder	backend	origin	revision	imported	patch
+LZA	za_202	LZA working folder (unpublished)	snapshot-af0118501f115c11	2026-11-18	patches/LZA.patch
+NativeGames-harmonyos	totk_v143	NativeGames-harmonyos (git project)	6960ae7a0d9c531e19c61b2a85d5bd9ec78f615c	2026-11-18	patches/NativeGames-harmonyos.patch
+OOT	oot_v131072	OOT working folder (unpublished)	snapshot-ed26f5ae7189a303	2026-11-18	patches/OOT.patch
+nxnative	oot_v131072	https://github.com/seedds/nxnative	028a26319eae744d9c1ad90406624ae384a4c857	2026-11-18	-
+totk-android	*	https://github.com/AurelioB/totk-android	e3c915fc1bb684fae5140c540dc69e44cfb14e77	2026-11-18	-

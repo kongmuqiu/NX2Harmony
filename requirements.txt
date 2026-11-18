@@ -1,0 +1,3 @@
+# Running NX2Harmony from source (NX2Harmony.cmd installs these on first start). Packing: packaging/requirements-build.txt
+PySide6-Essentials
+cryptography

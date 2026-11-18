@@ -1,0 +1,11 @@
+{
+  "name": "entry",
+  "version": "0.1.0",
+  "description": "The app: launcher with settings, the game page and its touch controls.",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "libtotk_ohos.so": "file:./src/main/cpp/types/libtotk_ohos"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "宝可梦传说 Z-A 原生运行"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "宝可梦传说 Z-A"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "宝可梦 Z-A"
+    },
+    {
+      "name": "app_name",
+      "value": "宝可梦 Z-A"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "塞尔达传说 时之笛 原生运行"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "塞尔达传说 时之笛"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "时之笛"
+    },
+    {
+      "name": "app_name",
+      "value": "时之笛"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+# What packaging/build.py needs in the Python that runs it (a venv is fine):
+#   python -m venv <env> && <env>\Scripts\python -m pip install -r packaging/requirements-build.txt
+#   <env>\Scripts\python packaging/build.py
+# cryptography goes into the packed app (nx2h/agc.py signs with AES-GCM; the bundled switchfs readers decrypt the
+# game's icon): without it PyInstaller only warns ("Hidden import ... not found") and the app cannot sign.
+# The 2026-11-17 build: Python 3.12.10 with these versions.
+pyinstaller==6.22.3
+pyside6-essentials==6.10.3
+pillow==11.3.0
+cryptography==50.0.2

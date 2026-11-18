@@ -1,0 +1,40 @@
+MIT License
+
+Copyright (c) 2026 OOT contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+This project (OOT: The Legend of Zelda: Ocarina of Time on HarmonyOS) was made from a copy of NativeGames-harmonyos
+(Tears of the Kingdom on HarmonyOS); the files it keeps from that project, changed or not (most of entry/ and of the
+build scripts in native-harmonyos/), are under the same MIT terms, Copyright (c) 2026 NativeGames-harmonyos
+contributors.
+
+Files under native-harmonyos/overlay/ that have a counterpart in totk-android (at the commit in
+native-harmonyos/UPSTREAM_PIN) are modified versions of those files and keep that project's MIT notice
+(native-harmonyos/overlay/LICENSE.totk-android); the code under overlay/third_party/d2r_gfx/ started in d2r-mobile,
+whose MIT notice is overlay/third_party/d2r_gfx/LICENSE. Of the overlay files without a counterpart,
+runtime/ns2_host.c, ns2_codec.c, ns2_opus_ms.c, offline_host.c, audio_out_ohos.c and
+third_party/d2r_gfx/gfx/nvn/nvn_ctl.h come from MacNativeGames (its MIT notice is the same text as totk-android's),
+runtime/za_hle.c, za_shader_dump.c and game_patches_za.c from the LZA project, and the rest are this project's own;
+several carry code ported from nxnative, and one part of ns2_host.c comes from pokopia-native, as their first
+comments say.
+
+Third-party code elsewhere (native-harmonyos/oot/d2r, native-harmonyos/third_party/dav1d,
+native-harmonyos/third_party/etcpak) keeps its own license. THIRD_PARTY_NOTICES.md lists all third-party code, here
+and taken at build time.

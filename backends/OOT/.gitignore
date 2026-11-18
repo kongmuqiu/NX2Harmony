@@ -1,0 +1,29 @@
+/node_modules
+/oh_modules
+/local.properties
+/.idea
+**/build
+/.hvigor
+.cxx
+/.clangd
+/.clang-format
+/.clang-tidy
+**/.test
+/.appanalyzer
+# game material and build output: never committed or published
+/prepared
+/artifacts
+/inputs
+*.nup
+*.nsp
+*.xci
+*.nsz
+prod.keys
+# machine settings, signing and build output: never committed
+/build-profile.json5
+/signing/
+native-harmonyos/local.ohos.env*
+native-harmonyos/local.ohos.ps1*
+entry/libs/
+__pycache__/
+*.so

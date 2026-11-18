@@ -1,0 +1,10 @@
+# The shell scripts, Python tools and Dockerfile run inside Linux containers from this checkout, so every text file keeps
+# LF line endings on every machine, whatever core.autocrlf says. PowerShell and DevEco Studio read LF files as they are.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.so binary
+*.a binary
+*.hap binary
+*.sh text eol=lf
+*.py text eol=lf

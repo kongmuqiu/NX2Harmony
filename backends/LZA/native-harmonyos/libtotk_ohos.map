@@ -1,0 +1,4 @@
+/* libtotk_ohos.so exports nothing by name: ArkTS reaches it through the N-API module it registers at load
+   (native-harmonyos/ohos/totk_napi.c). Everything else binds inside the library (the runtime's assembly addresses its own
+   symbols PC-relative, which a shared library allows only for symbols that cannot be preempted; android/libtotk.map). */
+{ global: totk_ohos_start; local: *; };

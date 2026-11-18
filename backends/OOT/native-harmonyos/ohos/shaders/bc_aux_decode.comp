@@ -1,0 +1,55 @@
+#version 450
+// BC blocks the game rendered through a one-texel-per-block view (an RGBA16UI / RGBA32UI auxiliary image, copied to
+// `src`) decoded into the rows of the uncompressed image the texture has on a GPU without BC (native-harmonyos: vk_res.c
+// bc_aux_*; the Metal backend's blk_aux / blk_decode does the same on Apple GPUs without BC). One invocation per 4x4
+// block; `dst` holds pitch 32-bit words per texel row, copied to the image afterwards.
+//   kind 0: BC4 UNORM -> R8     (8-byte blocks, 4 texels per word)
+//   kind 1: BC4 SNORM -> R8     (signed endpoints; written as R8_SNORM bytes)
+//   kind 2: BC5 UNORM -> RG8    (16-byte blocks: red block then green block, 2 texels per word)
+//   kind 3: BC5 SNORM -> RG8
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(std430, set = 0, binding = 0) readonly buffer Blocks { uint w[]; } src;
+layout(std430, set = 0, binding = 1) writeonly buffer Texels { uint w[]; } dst;
+layout(push_constant) uniform P { uint bx, by, pitch, kind; } p;
+
+// One BC4 channel of texel t (0..15) from its 64-bit block (lo, hi): an 8-bit value (two's complement when signed).
+// Interpolation exactly as bcdec (third_party/d2r_gfx/third_party/bcdec, the CPU decoder): rounded 16-bit fixed-point
+// weights, (wa * a0 + wb * a1 + 32768) >> 16.
+const int W6[6] = int[6](9363, 18724, 28086, 37450, 46812, 56173);
+const int W4[4] = int[4](13107, 26215, 39321, 52429);
+uint bc4(uint lo, uint hi, uint t, bool s) {
+    uint bit = 16u + 3u * t;
+    int idx = int(bit < 32u ? ((lo >> bit) | (bit > 29u ? (hi << (32u - bit)) : 0u)) & 7u : (hi >> (bit - 32u)) & 7u);
+    int a0, a1;
+    if (s) { a0 = max(int(lo << 24) >> 24, -127); a1 = max(int(lo << 16) >> 24, -127); }
+    else { a0 = int(lo & 0xffu); a1 = int((lo >> 8) & 0xffu); }
+    int v;
+    if (idx == 0) v = a0; else if (idx == 1) v = a1;
+    else if (a0 > a1) v = (W6[7 - idx] * a0 + W6[idx - 2] * a1 + 32768) >> 16;
+    else if (idx == 6) v = s ? -127 : 0; else if (idx == 7) v = s ? 127 : 255;
+    else v = (W4[5 - idx] * a0 + W4[idx - 2] * a1 + 32768) >> 16;
+    return uint(v) & 0xffu;
+}
+
+void main() {
+    uvec2 b = gl_GlobalInvocationID.xy;
+    if (b.x >= p.bx || b.y >= p.by) return;
+    bool s = (p.kind & 1u) != 0u;
+    if (p.kind < 2u) {
+        uint base = (b.y * p.bx + b.x) * 2u, lo = src.w[base], hi = src.w[base + 1u];
+        for (uint row = 0u; row < 4u; row++) {
+            uint word = 0u;
+            for (uint col = 0u; col < 4u; col++) word |= bc4(lo, hi, row * 4u + col, s) << (8u * col);
+            dst.w[(b.y * 4u + row) * p.pitch + b.x] = word;
+        }
+    } else {
+        uint base = (b.y * p.bx + b.x) * 4u;
+        uint rl = src.w[base], rh = src.w[base + 1u], gl = src.w[base + 2u], gh = src.w[base + 3u];
+        for (uint row = 0u; row < 4u; row++)
+            for (uint half_ = 0u; half_ < 2u; half_++) {
+                uint t0 = row * 4u + half_ * 2u, t1 = t0 + 1u;
+                uint word = bc4(rl, rh, t0, s) | bc4(gl, gh, t0, s) << 8 | bc4(rl, rh, t1, s) << 16 | bc4(gl, gh, t1, s) << 24;
+                dst.w[(b.y * 4u + row) * p.pitch + b.x * 2u + half_] = word;
+            }
+    }
+}

@@ -1,0 +1,157 @@
+cryptography 50.0.2: the Rust crates in cryptography/hazmat/bindings/_rust.pyd
+=============================================================================
+
+cryptography's Rust extension, _rust.pyd, is built from the crates below; the list and the licences are those of the SBOM
+the cryptography 50.0.2 wheel carries (cryptography-50.0.2.dist-info/sboms/cryptography-rust.cyclonedx.json, shipped in
+_internal). OpenSSL 4.0.3 is linked statically into _rust.pyd (sboms/sbom.json there), under the Apache License 2.0.
+
+Where a crate offers a choice, NX2Harmony takes the Apache License 2.0; its text is cryptography's LICENSE.APACHE
+(_internal/cryptography-50.0.2.dist-info/licenses/LICENSE.APACHE; also licenses/cryptography/LICENSE.APACHE here).
+The crates that offer no Apache choice, or carry their own copyright line with it, follow with their licence files,
+taken from the crate archives on crates.io (their sha256 equal the SBOM's).
+
+Crate                          Version     Licence (SBOM)                         In _rust.pyd
+
+cryptography-cffi              0.50.2      Apache-2.0 OR BSD-3-Clause             yes, cryptography's own
+cryptography-crypto            0.50.2      Apache-2.0 OR BSD-3-Clause             yes, cryptography's own
+cryptography-keepalive         0.50.2      Apache-2.0 OR BSD-3-Clause             yes, cryptography's own
+cryptography-key-parsing       0.50.2      Apache-2.0 OR BSD-3-Clause             yes, cryptography's own
+cryptography-openssl           0.50.2      Apache-2.0 OR BSD-3-Clause             yes, cryptography's own
+cryptography-x509              0.50.2      Apache-2.0 OR BSD-3-Clause             yes, cryptography's own
+cryptography-x509-verification 0.50.2      Apache-2.0 OR BSD-3-Clause             yes, cryptography's own
+asn1                           0.24.1      BSD-3-Clause                           yes
+asn1_derive                    0.24.1      BSD-3-Clause                           no, compile time only
+base64                         0.23.0      MIT OR Apache-2.0                      yes
+bitflags                       2.13.1      MIT OR Apache-2.0                      yes
+cc                             1.4.0       MIT OR Apache-2.0                      no, build tool
+cfg-if                         1.0.4       MIT OR Apache-2.0                      yes
+find-msvc-tools                0.1.9       MIT OR Apache-2.0                      no, build tool
+foreign-types-shared           0.1.1       MIT OR Apache-2.0                      yes
+foreign-types                  0.3.2       MIT OR Apache-2.0                      yes
+heck                           0.5.0       MIT OR Apache-2.0                      no, compile time only
+itoa                           1.0.18      MIT OR Apache-2.0                      yes
+libc                           0.2.189     MIT OR Apache-2.0                      yes
+once_cell                      1.21.4      MIT OR Apache-2.0                      yes
+openssl-macros                 0.1.1       MIT OR Apache-2.0                      no, compile time only
+openssl-sys                    0.9.117     MIT                                    yes
+openssl                        0.10.81     Apache-2.0                             yes
+pem                            4.0.0       MIT                                    yes
+pkg-config                     0.3.33      MIT OR Apache-2.0                      no, build tool
+portable-atomic                1.14.0      Apache-2.0 OR MIT                      yes
+proc-macro2                    1.0.107     MIT OR Apache-2.0                      no, compile time only
+pyo3-build-config              0.29.2      MIT OR Apache-2.0                      no, build tool
+pyo3-ffi                       0.29.2      MIT OR Apache-2.0                      yes
+pyo3-macros-backend            0.29.2      MIT OR Apache-2.0                      no, compile time only
+pyo3-macros                    0.29.2      MIT OR Apache-2.0                      no, compile time only
+pyo3                           0.29.2      MIT OR Apache-2.0                      yes
+quote                          1.0.47      MIT OR Apache-2.0                      no, compile time only
+self_cell                      1.3.0       Apache-2.0 OR GPL-2.0-only             yes
+shlex                          2.0.1       MIT OR Apache-2.0                      no, build tool
+syn                            2.0.119     MIT OR Apache-2.0                      no, compile time only
+target-lexicon                 0.13.5      Apache-2.0 WITH LLVM-exception         no, build tool
+unicode-ident                  1.0.24      (MIT OR Apache-2.0) AND Unicode-3.0    no, compile time only
+vcpkg                          0.2.15      MIT OR Apache-2.0                      no, build tool
+
+----------------------------------------------------------------------------------------------------
+asn1 0.24.1 (BSD-3-Clause)
+
+Copyright (c) Alex Gaynor and individual contributors.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+    1. Redistributions of source code must retain the above copyright notice,
+       this list of conditions and the following disclaimer.
+
+    2. Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+
+    3. Neither the name of rust-asn1 nor the names of its contributors may be used
+       to endorse or promote products derived from this software without
+       specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+----------------------------------------------------------------------------------------------------
+openssl-sys 0.9.117 (MIT)
+
+Copyright (c) 2014 Alex Crichton
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+----------------------------------------------------------------------------------------------------
+pem 4.0.0 (MIT)
+
+The MIT License (MIT)
+
+Copyright (c) 2016 Jonathan Creekmore
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+----------------------------------------------------------------------------------------------------
+openssl 0.10.81 (Apache-2.0: its copyright notice; the licence text is LICENSE.APACHE)
+
+Copyright 2011-2017 Google Inc.
+          2013 Jack Lloyd
+          2013-2014 Steven Fackler
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

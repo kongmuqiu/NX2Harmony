@@ -1,0 +1,21 @@
+{
+  "title": "0100F43008C44000",
+  "version": "v393216",
+  "display_version": "2.0.2",
+  "sdk": "19.3.11",
+  "note": "Identities of the player's Pok\u00e9mon Legends: Z-A 2.0.2 code modules (from tools/nup_extract.py), checked before every rewrite. The build ids match nxnative's dm/games/0100F43008C44000/game.tsv. rewritten_sha256 is recorded by native-harmonyos/za/rewrite_za.py --record on the first verified rewrite and checked afterwards.",
+  "build_id": {
+    "main": "b1f12fd919eae86ab8a978317677e64b",
+    "sdk": "df7a3960c74c3a4803f826c587153252"
+  },
+  "exefs_sha256": {
+    "main": "2308530d73b7fea60bb845ad57d9b1f10d3ff213f89c01f73627dc8224f43ef9",
+    "sdk": "0449487b457490afae879c08d6a90dd28295eaaa5c55677089a46b13991afbab",
+    "rtld": "714ead44bbd81ccba54509399a5dca59c1a24e068b384292f6755829f1e9d523",
+    "main.npdm": "d9628a99180dd3d19e58146057086bb33d85944ca11e5f8fc2f43ad7fddc9042"
+  },
+  "rewritten_sha256": {
+    "main.patched.bin": "d1fde7de4791be734e608743973dd1e0ae75972edff3f1772e99234ac05e3f5b",
+    "sdk.patched.bin": "08b2db8ae73b6748d0f535dad1563f2ad46034a51eda96f0bd38501785dc5aa9"
+  }
+}

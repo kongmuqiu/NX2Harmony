@@ -1,0 +1,29 @@
+{
+  "title": "0400486024DEC000",
+  "update_title": "0400486024DEC800",
+  "version": "v131072",
+  "sdk": "22.2.8",
+  "note": "Identities of the player's The Legend of Zelda: Ocarina of Time (Switch 2) v131072 code modules (from tools/nup_extract.py), checked before every rewrite. The build ids match nxnative's dm/games/0400486024DEC000/game.tsv. rewritten_sha256 is recorded by the first verified rewrite and checked afterwards. plain_sha256: the modules as native-harmonyos/oot/nso_unzbic.py stores them (segments uncompressed), what the rewriter reads.",
+  "build_id": {
+    "main": "e0f3ccfaf50065ae4ea01eb5aeb13b1a",
+    "sdk": "1643a838814f9c10c696f930ed681e7f",
+    "subsdk0": "b0110087a7b339ef74588d3bd0b4dd5d"
+  },
+  "exefs_sha256": {
+    "main": "7db9ddfda088c22d219ef13496decd7077c68cd67d4b37f53f4ac46a082768f2",
+    "sdk": "3ae3cd4cf340d72bdaba9e6f66016a74c1eae13737a5f7299375ed6654b9b1c5",
+    "subsdk0": "0d32c4bdbcfcfa1c4110c37eff18eaf70061a55090b7fedc741a2e37224065ba",
+    "rtld": "219f25ef4a64a704e86dacfeb25d9e8977045f2145e629268b94baf34d5e0bbe",
+    "main.npdm": "94c154d83cbaca00d092958cc2b3a0494d7308fe49de8cb33ece7e9e67303ea7"
+  },
+  "rewritten_sha256": {
+    "subsdk0.patched.bin": "7ce5b0eb7e3894a8354d0eb6157b52cb5a4cc9cbff0b32d252a86ac03d3758d4",
+    "main.patched.bin": "2573dd00668fad679d7d631655167ba2786a32ec908e9c2c81056ab54fa73570",
+    "sdk.patched.bin": "7f77e8fb46d582a34b313947d7f9b898f26e7b555b06743c88538df519ffb5f8"
+  },
+  "plain_sha256": {
+    "main": "ca344998b12a1b9c98444162dde46f9f6a53326e6107434bc42dfae2bc4a5eb4",
+    "sdk": "3256a316e02a1d7e9349172de7ece03b3771948e85f5a09a6f81651f73e9e9fc",
+    "subsdk0": "59b492257e9aaa3c16430908f866649bee68ab17e9326bd08d7fb28296a244fa"
+  }
+}

@@ -1,0 +1,10 @@
+# The backends' sources: LF on every checkout (their .sh and .py run in Linux containers; the rest does not mind),
+# batch files CRLF for cmd.exe, pictures and prebuilt libraries as they are.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.webp binary
+*.a binary
+*.so binary

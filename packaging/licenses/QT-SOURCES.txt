@@ -1,0 +1,71 @@
+Qt, PySide6 and shiboken6 in NX2Harmony: licence, source code, and how to replace them
+======================================================================================
+
+What NX2Harmony ships
+---------------------
+
+- Qt 6.10.3, in _internal/PySide6: Qt6Core.dll, Qt6Gui.dll, Qt6Network.dll, Qt6Svg.dll, Qt6Widgets.dll, the plugins in
+  _internal/PySide6/plugins and the translations in _internal/PySide6/translations.
+- PySide6 6.10.3 (the Qt for Python bindings), in _internal/PySide6: QtCore.pyd, QtGui.pyd, QtWidgets.pyd,
+  pyside6.abi3.dll; its package module PySide6/__init__.py is inside the program archive of NX2Harmony.exe and nx2h.exe.
+- shiboken6 6.10.3, in _internal/shiboken6: Shiboken.pyd, shiboken6.abi3.dll; its package module shiboken6/__init__.py
+  is inside the same program archive.
+
+They are the files of the PySide6_Essentials 6.10.3 and shiboken6 6.10.3 wheels from PyPI (built by The Qt Company for
+Windows x86_64 with Microsoft Visual C++), unmodified: NX2Harmony does not change, patch or compress them (no UPX).
+NX2Harmony leaves out Qt files it does not use; nothing else is different.
+
+Licence
+-------
+
+NX2Harmony uses Qt, PySide6 and shiboken6 under the GNU Lesser General Public License version 3 (LGPL-3.0-only):
+LGPL-3.0.txt and GPL-3.0.txt in this folder. The third-party code inside the Qt binaries is listed, with its licences,
+in QT-THIRD-PARTY.txt. NX2Harmony's own code is under the MIT License (NX2Harmony-LICENSE.txt), which allows you to
+modify it and to reverse-engineer it for debugging such modifications.
+
+Corresponding Source
+--------------------
+
+The complete source code of exactly these versions, as The Qt Company publishes it:
+
+Qt 6.10.3, everything in one archive:
+  https://download.qt.io/archive/qt/6.10/6.10.3/single/qt-everywhere-src-6.10.3.tar.xz
+  https://download.qt.io/archive/qt/6.10/6.10.3/single/qt-everywhere-src-6.10.3.zip
+Qt 6.10.3, the modules NX2Harmony ships:
+  https://download.qt.io/archive/qt/6.10/6.10.3/submodules/qtbase-everywhere-src-6.10.3.tar.xz
+    (Qt Core, Qt GUI, Qt Network, Qt Widgets; the plugins qtuiotouchplugin, qgif, qico, qjpeg, qwindows, qdirect2d,
+    qminimal, qoffscreen, qmodernwindowsstyle)
+  https://download.qt.io/archive/qt/6.10/6.10.3/submodules/qtsvg-everywhere-src-6.10.3.tar.xz
+    (Qt SVG; the plugins qsvgicon, qsvg)
+  https://download.qt.io/archive/qt/6.10/6.10.3/submodules/qtimageformats-everywhere-src-6.10.3.tar.xz
+    (the plugins qicns, qtga, qtiff, qwbmp, qwebp)
+  https://download.qt.io/archive/qt/6.10/6.10.3/submodules/qttranslations-everywhere-src-6.10.3.tar.xz
+    (the translations)
+  The same, in git: https://code.qt.io/cgit/qt/qtbase.git (and qtsvg.git, qtimageformats.git, qttranslations.git),
+  tag v6.10.3; mirrored at https://github.com/qt/qtbase and so on.
+
+PySide6 and shiboken6 6.10.3 (one source tree, pyside-setup):
+  https://download.qt.io/official_releases/QtForPython/pyside6/PySide6-6.10.3-src/pyside-setup-everywhere-src-6.10.3.tar.xz
+  https://download.qt.io/official_releases/QtForPython/pyside6/PySide6-6.10.3-src/pyside-setup-everywhere-src-6.10.3.zip
+  The same, in git: https://code.qt.io/cgit/pyside/pyside-setup.git, tag v6.10.3; mirrored at
+  https://github.com/pyside/pyside-setup (tag v6.10.3).
+
+If one of these links stops working, ask the NX2Harmony maintainers for a copy of that source.
+
+Using a modified or another build of Qt, PySide6 or shiboken6
+-------------------------------------------------------------
+
+The libraries are linked dynamically: Windows loads them from _internal/PySide6 and _internal/shiboken6 each time
+NX2Harmony.exe or nx2h.exe starts. To use your own build:
+
+1. Build Qt 6.10 (or a later, binary-compatible Qt 6.10.x) from the source above for Windows x86_64 with Microsoft
+   Visual C++ 2022, with at least the modules and plugins listed above. To change the bindings as well, build
+   PySide6 / shiboken6 6.10.3 from pyside-setup against that Qt, for CPython 3.12 (the Python inside NX2Harmony).
+2. Close NX2Harmony. Replace the files of the same name in _internal/PySide6 (Qt6*.dll, the plugins/ folders,
+   translations/*.qm; with your bindings also QtCore.pyd, QtGui.pyd, QtWidgets.pyd, pyside6.abi3.dll) and in
+   _internal/shiboken6 (Shiboken.pyd, shiboken6.abi3.dll). Keep the folder layout.
+3. Start NX2Harmony.exe again; it uses the replaced files.
+
+PySide6/__init__.py and shiboken6/__init__.py (unmodified, from the same wheels) are compiled into the program archive
+that NX2Harmony.exe and nx2h.exe carry. To change them, rebuild the two executables with PyInstaller from NX2Harmony's
+source (packaging/build.py with packaging/NX2Harmony.spec) in a Python environment that has your PySide6 / shiboken6.

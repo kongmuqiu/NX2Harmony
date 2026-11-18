@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>时之笛 鸿蒙 · GPU 占用面板</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --muted: #898781; --grid: #e1e0d9; --axis: #c3c2b7;
+  --border: rgba(11,11,11,.10); --wash: rgba(11,11,11,.04);
+  --gpu: #2a78d6; --gpu2: #86b6ef; --idle: #eb6834; --walk: #1baf7a; --ring: #eda100; --arena: #e87ba4; --fence: #008300;
+  --vio: #6250d6; --rest: #c3c2b7; --neutral: #52514e;
+  --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --crit: #d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781; --grid: #2c2c2a; --axis: #383835;
+    --border: rgba(255,255,255,.10); --wash: rgba(255,255,255,.05);
+    --gpu: #3987e5; --gpu2: #184f95; --idle: #d95926; --walk: #199e70; --ring: #c98500; --arena: #d55181; --fence: #008300;
+    --vio: #9085e9; --rest: #55544f; --neutral: #c3c2b7;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781; --grid: #2c2c2a; --axis: #383835;
+  --border: rgba(255,255,255,.10); --wash: rgba(255,255,255,.05);
+  --gpu: #3987e5; --gpu2: #184f95; --idle: #d95926; --walk: #199e70; --ring: #c98500; --arena: #d55181; --fence: #008300;
+  --vio: #9085e9; --rest: #55544f; --neutral: #c3c2b7;
+}
+* { box-sizing: border-box; }
+html, body { overflow-x: hidden; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 13px/1.5 system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; }
+header { padding: 12px 16px 10px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 5; }
+.bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+h1 { font-size: 16px; margin: 0; font-weight: 600; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--ink2); padding: 3px 10px; font: inherit; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button.on { background: var(--wash); color: var(--ink); font-weight: 600; }
+.seg button:hover { background: var(--wash); }
+.grow { flex: 1; }
+#status { margin-top: 6px; color: var(--ink2); font-size: 12px; display: flex; gap: 6px 18px; flex-wrap: wrap; }
+#status .st b { font-weight: 600; color: var(--ink); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; background: var(--muted); }
+.dot.ok { background: var(--good); } .dot.bad { background: var(--crit); } .dot.old { background: var(--warn); }
+#banner { display: none; margin-top: 6px; padding: 4px 8px; border-radius: 6px; background: var(--wash); color: var(--ink); font-size: 12px; }
+main { padding: 12px 16px 28px; display: grid; gap: 12px; max-width: 1500px; margin: 0 auto; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+h2 { font-size: 14px; margin: 0 0 10px; font-weight: 600; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+h2 small, h3 small { font-weight: 400; color: var(--muted); font-size: 12px; }
+h3 { font-size: 12px; margin: 0 0 4px; font-weight: 600; color: var(--ink2); display: flex; gap: 6px 12px; align-items: baseline; flex-wrap: wrap; }
+.lg { display: inline-flex; gap: 4px 12px; flex-wrap: wrap; font-weight: 400; color: var(--ink2); font-size: 12px; }
+.lg i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.lg i.ln { height: 2px; width: 14px; border-radius: 1px; vertical-align: 3px; }
+.lg i.thin { height: 1px; }
+.g { display: grid; gap: 14px 16px; align-items: end; }
+.g > div { align-self: start; }
+.g.a { grid-template-columns: 250px minmax(0, 1fr) minmax(0, 1fr); }
+.g.b { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 330px; }
+.g.c2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.g.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.g + .g, .g + .sub, .sub + .g, canvas + .g { margin-top: 14px; }
+figure { margin: 0; min-width: 0; }
+canvas { display: block; width: 100%; }
+canvas.ch { height: 150px; } canvas.sm { height: 120px; }
+.hero .k { color: var(--ink2); font-size: 12px; }
+.hero .big { font-size: 56px; line-height: 1.05; font-weight: 600; letter-spacing: -1px; margin: 2px 0 4px; }
+.hero .split { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 2px; margin: 6px 0 8px; }
+.hero .split i { display: block; height: 100%; border-radius: 4px; }
+.hero .idle b { font-size: 26px; font-weight: 600; }
+.hero .line { color: var(--ink2); font-size: 12px; margin-top: 4px; }
+.hero .line b { color: var(--ink); font-weight: 600; }
+.sub { border-top: 1px solid var(--border); padding-top: 12px; }
+.hint { color: var(--ink2); font-size: 12px; background: var(--wash); border-radius: 6px; padding: 8px 10px; }
+.meters { display: grid; grid-template-columns: 62px minmax(0, 1fr) 46px 96px; gap: 7px 8px; align-items: center; font-size: 12px; }
+.meters .nm { color: var(--ink2); } .meters .val { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.track { height: 8px; border-radius: 4px; background: var(--wash); overflow: hidden; }
+.track i { display: block; height: 100%; border-radius: 4px; background: var(--gpu); }
+.meters canvas { height: 18px; }
+.note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+.cores { display: grid; grid-template-columns: 138px repeat(var(--n, 14), minmax(0, 1fr)); gap: 3px 3px; font-size: 12px; align-items: stretch; }
+.cores .lab { color: var(--ink2); padding: 3px 6px 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cores .clu { text-align: center; color: var(--ink2); font-weight: 600; border-bottom: 2px solid var(--axis); padding-bottom: 2px; margin: 0 2px; }
+.cores .c { position: relative; text-align: center; padding: 3px 0; border-radius: 4px; background: var(--wash); font-variant-numeric: tabular-nums; overflow: hidden; }
+.cores .c.first { margin-left: 5px; }
+.cores .c.hd { background: transparent; color: var(--muted); }
+.cores .c .f { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--vio); border-radius: 0 2px 2px 0; }
+.cores .c .h { position: absolute; inset: 0; background: var(--vio); }
+.cores .c span { position: relative; }
+.cores .c canvas { height: 20px; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 12px; }
+td, th { padding: 3px 4px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th { color: var(--ink2); font-weight: 500; }
+td:first-child, th:first-child { text-align: left; }
+.scroll { overflow-x: auto; }
+#ref td, #ref th { text-align: left; white-space: normal; vertical-align: top; padding: 4px 8px 4px 0; }
+#ref td:first-child { white-space: nowrap; font-weight: 600; }
+code { font: 12px ui-monospace, Consolas, "Cascadia Mono", monospace; background: var(--wash); padding: 0 4px; border-radius: 3px; }
+#tip { position: absolute; display: none; pointer-events: none; z-index: 20; background: var(--surface); color: var(--ink); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 9px; font-size: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.18); max-width: 520px; }
+#tip .tt { color: var(--ink2); margin-bottom: 3px; }
+#tip .tr { display: flex; gap: 6px; align-items: baseline; }
+#tip .tr i { display: inline-block; width: 12px; height: 2px; border-radius: 1px; flex: none; transform: translateY(-3px); }
+#tip .tr b { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#tip .tr span { color: var(--ink2); }
+details summary { cursor: pointer; color: var(--ink2); }
+@media (max-width: 900px) { .g.a, .g.b, .g.c2, .g.c3 { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>时之笛 鸿蒙 · GPU 占用面板</h1>
+    <span class="grow"></span>
+    <span class="seg" id="spans"><button data-s="300">5 分钟</button><button data-s="600" class="on">10 分钟</button><button data-s="1800">30 分钟</button></span>
+    <span class="seg" id="themes"><button data-t="">跟随系统</button><button data-t="light">浅色</button><button data-t="dark">深色</button></span>
+  </div>
+  <div id="status">连接中…</div>
+  <div id="banner"></div>
+</header>
+<main>
+  <section class="card">
+    <h2>① GPU 忙碌占比 <small>GPU 是瓶颈时它应该一直在忙；不到 100% 的部分就是每帧让 GPU 空等的时间</small></h2>
+    <div class="g a">
+      <div class="hero">
+        <div class="k" id="hK">最近 300 帧</div>
+        <div class="big" id="hBusy">–</div>
+        <div class="split" id="hSplit" title="一帧里 GPU 在执行 / 空闲"></div>
+        <div class="k" id="hSub">GPU ms ÷ 帧 ms</div>
+        <div class="idle"><b id="hIdle">–</b> ms 每帧空闲</div>
+        <div class="line" id="hTl"></div>
+        <div class="line" id="hSys"></div>
+      </div>
+      <figure>
+        <h3>忙碌占比 %（每 300 帧一段）<span class="lg"><span><i class="ln" style="background:var(--gpu)"></i>在执行：GPU ms ÷ 帧 ms</span><span><i class="ln thin" style="background:var(--neutral)"></i>有活在手（时间线，上界）</span></span></h3>
+        <canvas class="ch" id="cBusy"></canvas>
+      </figure>
+      <figure>
+        <h3>每帧空闲 ms <span class="lg"><span><i class="ln" style="background:var(--idle)"></i>帧 ms − GPU ms</span><span><i class="ln thin" style="background:var(--neutral)"></i>帧间隔 − 有活在手（时间线，下界）</span></span></h3>
+        <canvas class="ch" id="cIdle"></canvas>
+      </figure>
+    </div>
+    <div class="sub" id="tlWrap" style="display:none">
+      <h3>一帧之内 GPU 什么时候在等（最近 12 帧；横轴是距上一次呈现的毫秒，竖线是本帧呈现）
+        <span class="lg"><span><i style="background:var(--walk)"></i>回放线程在回放（有记录的）</span><span><i style="background:var(--ink2);width:2px"></i>封口一个槽</span><span><i style="background:var(--gpu2)"></i>GPU：上一帧剩下的</span><span><i style="background:var(--gpu)"></i>GPU：本帧已提交未完成</span><span><i style="background:var(--idle)"></i>GPU 空闲</span></span></h3>
+      <canvas id="cStrip" style="height:440px"></canvas>
+      <div class="g c2">
+        <figure><h3>逐帧忙碌占比 % <small>Σ 槽 GPU ÷ 帧间隔，最近 300 帧；活会拖进下一帧，单帧可以过百</small></h3><canvas class="sm" id="cPF"></canvas></figure>
+        <figure><h3>逐帧空闲 ms <small>帧间隔 − 有活在手的时间；特别长的帧画到顶为止</small></h3><canvas class="sm" id="cPI"></canvas></figure>
+      </div>
+    </div>
+    <div class="sub hint" id="tlNone">日志里没有 <code>[frame-tl late]</code> 行，所以没有逐帧时间线。用 <code>TOTK_FRAME_TIMELINE=1</code> 启动游戏后这里会画出一帧之内回放线程、GPU 在忙、GPU 空闲各占哪一段（开着它回放每个绘制要多花 CPU，量帧率时要关）。</div>
+  </section>
+
+  <section class="card">
+    <h2>② 系统怎么看 GPU <small>SP_daemon 一两秒一个采样；应用每 5 秒写一行 device state</small></h2>
+    <div class="g b">
+      <figure><h3>gpuLoad % <small id="vLoad"></small></h3><canvas class="ch" id="cLoad"></canvas></figure>
+      <figure><h3>GPU 频率 MHz <small id="vFreq"></small><span class="lg"><span><i class="ln" style="background:var(--gpu)"></i>SP_daemon</span><span><i class="ln thin" style="background:var(--neutral)"></i>应用读到的（hilog）</span></span></h3><canvas class="ch" id="cFreq"></canvas></figure>
+      <div>
+        <h3>系统给的等级 <small id="vDev"></small></h3>
+        <div class="meters" id="meters"></div>
+        <div class="note">GPU 等级 1–10，温控 1–6。总负载 10 / 10 不等于饱和（降频时也是 10），以 ① 的时间戳口径为准。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>③ 帧率和一帧的时间去向 <small>每 300 帧一段</small></h2>
+    <div class="g c2">
+      <figure><h3>帧率 fps <small id="vFps"></small></h3><canvas class="ch" id="cFps"></canvas></figure>
+      <figure><h3>一帧 ms 的拆分
+        <span class="lg"><span><i style="background:var(--walk)"></i>录制（回放）</span><span><i style="background:var(--ring)"></i>等 GPU：环槽</span><span><i style="background:var(--arena)"></i>快照区</span><span><i style="background:var(--fence)"></i>其它栅栏</span><span><i style="background:var(--rest)"></i>其余（游戏自己 + 回放之外）</span></span></h3>
+        <canvas class="ch" id="cSplit"></canvas></figure>
+    </div>
+    <div class="g c3">
+      <figure><h3>回放线程 ms / 帧 <span class="lg"><span><i class="ln" style="background:var(--walk)"></i>在 CPU 上</span><span><i class="ln" style="background:var(--ring)"></i>离开 CPU（多数在等 GPU）</span></span></h3><canvas class="sm" id="cWalk"></canvas></figure>
+      <figure><h3>绘制数 / 帧 <small id="vDraws"></small></h3><canvas class="sm" id="cDraws"></canvas></figure>
+      <figure><h3>提交槽 / 帧 <span class="lg"><span><i class="ln" style="background:var(--neutral)"></i>全部</span><span><i class="ln" style="background:var(--vio)"></i>小槽（不足 8 个绘制）</span><span><i class="ln" style="background:var(--arena)"></i>分块提交</span></span></h3><canvas class="sm" id="cSlots"></canvas></figure>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>④ CPU <small>小核 0–3，中核 4–11，Prime 12–13（逻辑 CPU）；频率和负载来自 SP_daemon，线程所在核来自运行日志</small></h2>
+    <div class="cores" id="cores"></div>
+    <div class="note" id="spin"></div>
+    <div class="g c3" style="margin-top:12px">
+      <figure><h3>小核频率 MHz <small id="vC0"></small></h3><canvas class="sm" id="cC0"></canvas></figure>
+      <figure><h3>中核频率 MHz <small id="vC1"></small></h3><canvas class="sm" id="cC1"></canvas></figure>
+      <figure><h3>Prime 频率 MHz <small id="vC2"></small></h3><canvas class="sm" id="cC2"></canvas></figure>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>每个 300 帧窗口的数值 <small>上面各图的表格版，最新在上</small></h2>
+    <div class="scroll"><table id="tbl"></table></div>
+  </section>
+
+  <section class="card">
+    <h2>⑤ 每个数是什么、从哪来 <small>采集口径</small></h2>
+    <table id="ref">
+      <tr><th>数</th><th>含义</th><th>来源</th></tr>
+      <tr><td>GPU 忙碌占比</td><td>GPU ms ÷ 帧 ms。GPU ms 是每个提交槽首尾两个 GPU 时间戳之差的合计，按 300 帧平均；帧 ms = 1000 ÷ fps。只算本游戏的提交，不含系统合成。</td><td>运行日志 <code>frame N, per frame: … GPU X ms</code> 和 <code>frame N: X fps over the last 300</code></td></tr>
+      <tr><td>每帧空闲</td><td>帧 ms − GPU ms：一帧里 GPU 没在执行本游戏任何提交的时间。</td><td>同上</td></tr>
+      <tr><td>逐帧精确 / 有活在手</td><td>逐帧精确 = Σ 各槽 <code>gpu=</code> ÷ <code>game_iv</code>。有活在手 = 各槽从 QueueSubmit 返回到观察到完成这段时间的并集（上一帧拖进来的也算）÷ 帧间隔；完成时刻是“看到”的时刻，略晚于真正完成，所以它是忙的上界、空闲的下界。</td><td>运行日志 <code>[frame-tl late]</code>（游戏带 <code>TOTK_FRAME_TIMELINE=1</code> 才有；同 <code>frametl.py</code> 的解析）</td></tr>
+      <tr><td>帧内时间线</td><td>每帧一条：上排是回放线程各次回放的起止，细竖线是它封口一个槽的时刻；下排是 GPU——上一帧剩下的、本帧已提交未完成的、空闲的。底部是最近 300 帧里各时刻“GPU 空闲”“有回放记录”的帧占比。有些帧的长回放没有记在 <code>walks=</code> 里（上排空着而槽还在封口），这时回放在不在跑要看封口的竖线。</td><td><code>[frame-tl late]</code> 的 <code>walks=</code>、<code>slots=</code>（封口、QueueSubmit、完成、GPU ms）</td></tr>
+      <tr><td>gpuLoad、GPU 频率</td><td>系统统计的 GPU 负载百分比和当前频率，一两秒一个采样（每次起一个 SP_daemon）。</td><td><code>hdc shell "SP_daemon -N 1 -c -g"</code> 的 <code>gpuLoad</code>、<code>gpuFrequency</code></td></tr>
+      <tr><td>系统等级</td><td>温控等级 1–6；GPU 负载等级 1–10：总负载、顶点、片元、纹理、带宽；应用读到的 GPU 频率。每 5 秒一行。</td><td><code>hdc shell "hilog -x | grep 'device state'"</code>（应用 <code>NGGame</code>，Game Service Kit）</td></tr>
+      <tr><td>一帧的拆分</td><td>录制 = 回放线程录制命令的时间（不含等待）；等 GPU = 回放线程等提交槽的时间，细分为环槽 / 快照区 / 其它栅栏；其余 = 帧 ms − 录制 − 等 GPU，即游戏自己的逻辑和回放之外的一切。</td><td><code>per frame: recording X ms, waiting for the GPU Y ms</code>；<code>waits/frame by kind: ring slot … uniform-snapshot arena … other fences …</code></td></tr>
+      <tr><td>回放线程</td><td>每帧在 CPU 上的时间和离开 CPU 的时间（墙上时间 − CPU 时间）、每帧绘制数、每个绘制的 CPU 微秒。</td><td><code>walker cpu frame N: cpu … wall … draws … offcpu …</code></td></tr>
+      <tr><td>提交槽</td><td>每帧交给 GPU 的槽数；小槽 = 封口时不足 8 个绘制的槽；分块提交 = 一次游戏提交被拆开提前交出的次数；环的格数。</td><td><code>slot submission/frame: all/game/handed …</code>；<code>slots sealed with fewer than 8 draws …, chunk submissions …; ring N</code></td></tr>
+      <tr><td>CPU 各核</td><td>每个逻辑 CPU 的频率和负载。SP_daemon 单次采样的负载很粗（常见 0 / 25 / 50 / 100），表里显示的是最近 10 次的平均。</td><td>SP_daemon 的 <code>cpuNFrequency</code>、<code>cpuNUsage</code></td></tr>
+      <tr><td>线程所在核</td><td>关键线程最近 10 秒落在各逻辑 CPU 上的采样占比（0.1 秒看一次）；role 2 是游戏主线程，role 1 是回放线程。</td><td>运行日志 <code>[ohos-pin] totk-walk … (role N) ran on cpu4:17% …</code></td></tr>
+      <tr><td>频率保持线程</td><td>最近 30 秒空转 / 睡眠各多久。这一行里的 cpu 是物理核编号（核 7 = 逻辑 CPU 10–11）。</td><td>运行日志 <code>[ohos-spin] the last 30 s: spun … slept … on cpu N now</code></td></tr>
+      <tr><td>怎么取的</td><td colspan="2">运行日志：<code>hdc file recv -b nx2h.u000000.oot /data/storage/el2/base/haps/entry/files/android/totk-native.log</code>，每 5 秒一次，只解析新增部分；日志没有时间戳，窗口在时间轴上的位置按取到的时刻估计（±5 秒）。只采样，不锁频、不改手机上任何设置。<br>
+        实时：<code>python -I native-harmonyos\oot\perfdash\perfdash.py</code>；离线回放：<code>python -I native-harmonyos\oot\perfdash\perfdash.py --replay artifacts\runs\&lt;日志&gt; [--speed N] [--replay-sys &lt;系统采样&gt;]</code>；实时加 <code>--record</code> 把系统采样存到 <code>artifacts\runs\perfdash-sys-*.txt</code>。</td></tr>
+    </table>
+  </section>
+</main>
+<div id="tip"></div>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const FONT = '11px system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif';
+const CLUSTERS = [["小核", [0, 1, 2, 3], 1720], ["中核", [4, 5, 6, 7, 8, 9, 10, 11], 2270], ["Prime", [12, 13], 2750]];
+const C = {}, REG = {}, HOV = {};
+let D = null, SPAN = 600, linkOk = false, lastOk = 0;
+
+const fx = (v, d = 1) => v == null || !isFinite(v) ? "–" : v.toFixed(d);
+const pc = (v, d = 1) => v == null || !isFinite(v) ? "–" : (v * 100).toFixed(d) + "%";
+const clock = (t, short) => { const s = new Date(t * 1000).toTimeString(); return short ? s.slice(0, 5) : s.slice(0, 8); };
+const ago = s => s == null ? "–" : s < 90 ? Math.max(0, Math.round(s)) + " 秒前" : Math.round(s / 60) + " 分钟前";
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function colors() {
+  const s = getComputedStyle(document.documentElement);
+  for (const k of ["surface", "ink", "ink2", "muted", "grid", "axis", "gpu", "gpu2", "idle", "walk", "ring", "arena", "fence", "vio", "rest", "neutral"]) C[k] = s.getPropertyValue("--" + k).trim();
+}
+function setup(cv) {
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(10, Math.round(r.width * dpr)), h = Math.max(10, Math.round(r.height * dpr));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, r.width, r.height);
+  return [g, r.width, r.height];
+}
+function seg(g, x0, y0, x1, y1) { g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); }
+function niceCeil(v) { if (!(v > 0)) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }
+function niceTicks(min, max, n) {
+  const raw = (max - min) / n, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p, step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p, out = [];
+  for (let v = Math.ceil(min / step - 1e-9) * step; v <= max + step * 1e-6; v += step) out.push(+v.toFixed(8));
+  return out;
+}
+function timeTicks(t0, t1) {
+  const step = [10, 15, 30, 60, 120, 300, 600].find(s => (t1 - t0) / s <= 6) || 900, out = [];
+  for (let t = Math.ceil(t0 / step) * step; t <= t1; t += step) out.push([t, clock(t, step >= 60)]);
+  return out;
+}
+function showTip(cv, px, py, t) {
+  const tip = $("tip"); tip.textContent = "";
+  tip.appendChild(el("div", "tt", t.title));
+  for (const r of t.rows) {
+    const d = el("div", "tr"), k = el("i"); k.style.background = r.color || "transparent";
+    d.append(k, el("b", "", r.value), el("span", "", r.name)); tip.appendChild(d);
+  }
+  const rc = cv.getBoundingClientRect(); tip.style.display = "block";
+  let x = rc.left + px + 14, y = rc.top + py + 14;
+  if (x + tip.offsetWidth > innerWidth - 8) x = rc.left + px - tip.offsetWidth - 14;
+  if (y + tip.offsetHeight > innerHeight - 8) y = rc.top + py - tip.offsetHeight - 10;
+  tip.style.left = Math.max(4, x) + scrollX + "px"; tip.style.top = y + scrollY + "px";
+}
+function hideTip() { $("tip").style.display = "none"; }
+function bindHover(id, draw) {
+  const cv = $(id);
+  cv.addEventListener("mousemove", e => { const r = cv.getBoundingClientRect(); HOV[id] = {px: e.clientX - r.left, py: e.clientY - r.top}; draw(id); });
+  cv.addEventListener("mouseleave", () => { delete HOV[id]; hideTip(); draw(id); });
+}
+
+// One plot: horizontal axis x0..x1 (time or frame number), vertical min..max.
+//   series: [{color, width, spans: [[xa, xb, v]]} | {color, width, pts: [[x, v]], gap}]   bars: [{a, b, parts: [{color, v}]}]
+//   refs: [{v, label}]   tip(x) -> {x, title, rows: [{color, value, name}]}
+function chart(id) {
+  const cv = $(id), o = REG[id] ? REG[id]() : null; if (!cv || !o) return;
+  const [g, W, H] = setup(cv), L = o.left || 40, R = 12, T = 10, B = 22, pw = W - L - R, ph = H - T - B;
+  const X = x => L + (x - o.x0) / (o.x1 - o.x0) * pw, Y = v => T + (1 - (v - o.min) / (o.max - o.min)) * ph;
+  g.font = FONT; g.lineWidth = 1;
+  for (const v of niceTicks(o.min, o.max, 4)) {
+    const y = Math.round(Y(v)) + .5;
+    g.strokeStyle = v === o.min ? C.axis : C.grid; seg(g, L, y, W - R, y);
+    g.fillStyle = C.muted; g.textAlign = "right"; g.textBaseline = "middle"; g.fillText(o.yfmt ? o.yfmt(v) : String(v), L - 6, y);
+  }
+  g.textAlign = "center"; g.textBaseline = "alphabetic"; g.fillStyle = C.muted;
+  for (const [x, label] of o.xticks || []) if (x >= o.x0 && x <= o.x1) g.fillText(label, Math.min(Math.max(X(x), L + 22), W - R - 22), H - 6);
+  let any = false;
+  g.save(); g.beginPath(); g.rect(L, T - 6, pw, ph + 7); g.clip();
+  for (const r of o.refs || []) {
+    const y = Math.round(Y(r.v)) + .5; g.strokeStyle = C.axis; seg(g, L, y, W - R, y);
+    if (r.label) { g.fillStyle = C.muted; g.textAlign = "right"; g.textBaseline = "bottom"; g.fillText(r.label, W - R - 2, y - 2); }
+  }
+  for (const b of o.bars || []) {
+    const xa = X(b.a), xb = X(b.b), w = Math.max(2, Math.min(24, xb - xa - 2)), x = (xa + xb) / 2 - w / 2;
+    let v0 = 0;
+    for (const p of b.parts) {
+      if (!(p.v > 0)) continue;
+      const y1 = Y(v0), y0 = Y(v0 + p.v), h = y1 - y0; v0 += p.v;
+      g.fillStyle = p.color; g.fillRect(x, y0 + (h > 4 ? 2 : 0), w, h - (h > 4 ? 2 : 0));   // a 2 px gap in the surface colour between parts
+      any = true;
+    }
+  }
+  for (const s of o.series || []) {
+    g.strokeStyle = s.color; g.lineWidth = s.width || 2; g.lineJoin = "round"; g.lineCap = "round"; g.beginPath();
+    const cl = v => Math.min(Math.max(v, o.min), o.max);
+    let last = null, end = null;
+    if (s.spans) for (const [a, b, v] of s.spans) {
+      const y = Y(cl(v)); if (last != null && Math.abs(a - last) < 8) g.lineTo(X(a), y); else g.moveTo(X(a), y);
+      g.lineTo(X(b), y); last = b; end = [X(b), y]; any = true;
+    }
+    if (s.pts) for (const [x, v] of s.pts) {
+      if (v == null) { last = null; continue; }
+      const y = Y(cl(v)); if (last != null && (!s.gap || x - last <= s.gap)) g.lineTo(X(x), y); else g.moveTo(X(x), y);
+      last = x; end = [X(x), y]; any = true;
+    }
+    g.stroke();
+    if (end && s.dot) { g.fillStyle = C.surface; g.beginPath(); g.arc(end[0], end[1], 5.5, 0, 6.3); g.fill(); g.fillStyle = s.color; g.beginPath(); g.arc(end[0], end[1], 3.5, 0, 6.3); g.fill(); }
+  }
+  g.restore();
+  if (!any) {
+    const text = o.empty || "还没有数据", tw = g.measureText(text).width + 16;
+    g.fillStyle = C.surface; g.fillRect(L + pw / 2 - tw / 2, T + ph / 2 - 10, tw, 20);
+    g.fillStyle = C.muted; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(text, L + pw / 2, T + ph / 2);
+  }
+  const hv = HOV[id];
+  if (hv && o.tip && hv.px >= L && hv.px <= W - R) {
+    const t = o.tip(o.x0 + (hv.px - L) / pw * (o.x1 - o.x0));
+    if (t) { const x = Math.round(X(t.x)) + .5; g.strokeStyle = C.ink2; g.lineWidth = 1; seg(g, x, T - 4, x, T + ph); showTip(cv, hv.px, hv.py, t); } else hideTip();
+  }
+}
+
+const tlOk = w => !!w.tl && w.tl.n >= 0.9 * w.n;   // rows exist only for late frames: a window with few rows is not the window
+const spansOf = (W, f) => W.map(w => [w.t - (w.dur || 0), w.t, f(w)]).filter(s => s[2] != null && isFinite(s[2]));
+function winAt(W, x) {
+  let best = null, bd = 1e18;
+  for (const w of W) { const a = w.t - (w.dur || 0), d = x < a ? a - x : x > w.t ? x - w.t : 0; if (d < bd) { bd = d; best = w; } }
+  return bd < 20 ? best : null;
+}
+const winTitle = w => `帧 ${w.frame - w.n + 1}–${w.frame} · ${clock(w.t - (w.dur || 0))}–${clock(w.t)}`;
+function nearest(rows, x, col = 0) {   // rows sorted by rows[k][col]
+  if (!rows.length) return null;
+  let lo = 0, hi = rows.length - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (rows[m][col] < x) lo = m; else hi = m; }
+  return Math.abs(rows[lo][col] - x) <= Math.abs(rows[hi][col] - x) ? rows[lo] : rows[hi];
+}
+
+function render() {
+  if (!D) return;
+  colors();
+  const t1 = D.now, t0 = t1 - SPAN, xt = timeTicks(t0, t1), W = D.windows.filter(w => w.t >= t0 - 60), last = D.windows[D.windows.length - 1];
+  const base = {x0: t0, x1: t1, xticks: xt};
+  const tlw = W.filter(tlOk);
+
+  // ① the busy share
+  hero(last);
+  const busy = spansOf(W, w => w.busy == null ? null : w.busy * 100), pend = spansOf(tlw, w => w.tl.pend_share == null ? null : w.tl.pend_share * 100);
+  const lowB = Math.min(60, ...busy.map(s => s[2]), ...pend.map(s => s[2]));
+  REG.cBusy = () => ({...base, min: Math.max(0, Math.floor(lowB / 10) * 10), max: 100, yfmt: v => v + "%", refs: [{v: 100}],
+    series: [{color: C.neutral, width: 1.2, spans: pend}, {color: C.gpu, spans: busy, dot: true}],
+    tip: x => { const w = winAt(W, x); if (!w) return null; const r = [
+        {color: C.gpu, value: pc(w.busy), name: `在执行（GPU ${fx(w.gpu_ms)} ms ÷ 帧 ${fx(w.frame_ms)} ms）`}];
+      if (tlOk(w)) r.push({value: pc(w.tl.busy), name: "逐帧精确（Σ 槽 GPU ÷ Σ 帧间隔）"}, {color: C.neutral, value: pc(w.tl.pend_share), name: "有活在手（提交到完成）"});
+      else if (w.tl) r.push({value: `${w.tl.n} / ${w.n}`, name: "帧有时间线行（不全，不画）"});
+      if (w.sys && w.sys.gpu_mhz != null) r.push({value: fx(w.sys.gpu_mhz, 0) + " MHz", name: "期间 GPU 频率（SP_daemon 平均）"});
+      return {x: w.t - (w.dur || 0) / 2, title: winTitle(w), rows: r}; }});
+  const idle = spansOf(W, w => w.idle_ms), idleTl = spansOf(tlw, w => w.tl.idle);
+  REG.cIdle = () => ({...base, min: 0, max: niceCeil(Math.max(20, ...idle.map(s => s[2]), ...idleTl.map(s => s[2]))), yfmt: v => String(v),
+    series: [{color: C.neutral, width: 1.2, spans: idleTl}, {color: C.idle, spans: idle, dot: true}],
+    tip: x => { const w = winAt(W, x); if (!w) return null; const r = [{color: C.idle, value: fx(w.idle_ms) + " ms", name: "帧 ms − GPU ms"}];
+      if (tlOk(w)) r.push({color: C.neutral, value: fx(w.tl.idle) + " ms", name: "帧间隔 − 有活在手（时间线）"}, {value: fx(w.tl.tail) + " ms", name: "最后一个槽提交后 GPU 还要做多久"});
+      return {x: w.t - (w.dur || 0) / 2, title: winTitle(w), rows: r}; }});
+  const tl = D.tl;
+  $("tlWrap").style.display = tl ? "" : "none"; $("tlNone").style.display = tl ? "none" : "";
+  if (tl) {
+    const S = tl.series, f0 = S[0][0], f1 = Math.max(S[S.length - 1][0], f0 + 1), ft = [];
+    for (let f = Math.ceil(f0 / 50) * 50; f <= f1; f += 50) ft.push([f, "帧 " + f]);
+    const share = S.map(r => [r[0], r[1] > 0 ? r[2] / r[1] * 100 : null]), idl = S.map(r => [r[0], r[3] == null ? null : r[1] - r[3]]);
+    const ftip = x => { const r = nearest(S, x); if (!r) return null; return {x: r[0], title: `帧 ${r[0]} · 间隔 ${fx(r[1])} ms · ${r[4]} 个槽`, rows: [
+      {color: C.gpu, value: fx(r[1] > 0 ? r[2] / r[1] * 100 : null) + "%", name: `Σ 槽 GPU ${fx(r[2])} ms ÷ 帧间隔`},
+      {value: r[3] == null ? "–" : fx(r[3]) + " ms", name: "有活在手"}, {color: C.idle, value: r[3] == null ? "–" : fx(r[1] - r[3]) + " ms", name: "空闲"}]}; };
+    REG.cPF = () => ({x0: f0, x1: f1, xticks: ft, min: 0, max: 150, yfmt: v => v + "%", refs: [{v: 100, label: "100%"}],
+      series: [{color: C.gpu, width: 1.2, pts: share}], tip: ftip});
+    const iv = idl.map(p => p[1]).filter(v => v != null).sort((a, b) => a - b), p97 = iv.length ? iv[Math.floor(.97 * (iv.length - 1))] : 0;
+    REG.cPI = () => ({x0: f0, x1: f1, xticks: ft, min: 0, max: niceCeil(Math.max(20, p97 * 1.3)), series: [{color: C.idle, width: 1.2, pts: idl}], tip: ftip});
+  } else { delete REG.cPF; delete REG.cPI; }
+
+  // ② the system's view
+  const sp = D.sp.series, dev = D.dev, lastSp = sp[sp.length - 1], lastDev = dev[dev.length - 1];
+  $("vLoad").textContent = lastSp && lastSp[1] != null ? `现在 ${fx(lastSp[1], 0)}%` : "";
+  $("vFreq").textContent = lastSp && lastSp[2] != null ? `现在 ${fx(lastSp[2], 0)}` : lastDev && lastDev[7] != null ? `现在 ${fx(lastDev[7], 0)}` : "";
+  const sptip = x => { const r = nearest(sp, x), d = nearest(dev, x); if (!r && !d) return null; const rows = [];
+    if (r && Math.abs(r[0] - x) < 10) rows.push({color: C.gpu, value: fx(r[1], 0) + "%", name: "gpuLoad"}, {color: C.gpu, value: fx(r[2], 0) + " MHz", name: "GPU 频率（SP_daemon）"});
+    if (d && Math.abs(d[0] - x) < 15) rows.push({color: C.neutral, value: fx(d[7], 0) + " MHz", name: "应用读到的频率"}, {value: `${d[2] ?? "–"} / 带宽 ${d[6] ?? "–"} / 片元 ${d[4] ?? "–"}`, name: "GPU 等级"}, {value: d[1] == null ? "–" : d[1] + " 级", name: "温控"});
+    const at = rows.length && r && Math.abs(r[0] - x) < 10 ? r[0] : d ? d[0] : x;
+    return rows.length ? {x: at, title: clock(at), rows} : null; };
+  const empty = D.mode === "replay" && !(D.replay && D.replay.sys) ? "回放里没有系统采样（--replay-sys）" : "还没有采样";
+  REG.cLoad = () => ({...base, min: 0, max: 100, yfmt: v => v + "%", empty, series: [{color: C.gpu, pts: sp.map(r => [r[0], r[1]]), gap: 8}], tip: sptip});
+  const fmax = Math.max(1000, niceCeil(Math.max(0, ...sp.map(r => r[2] || 0), ...dev.map(r => r[7] || 0))));
+  REG.cFreq = () => ({...base, min: 0, max: fmax, empty, series: [{color: C.neutral, width: 1.2, pts: dev.map(r => [r[0], r[7]]), gap: 20}, {color: C.gpu, pts: sp.map(r => [r[0], r[2]]), gap: 8}], tip: sptip});
+  meters(dev, t0, t1);
+
+  // ③ frame rate and the frame's split
+  $("vFps").textContent = last ? `现在 ${fx(last.fps)}，一帧 ${fx(last.frame_ms)} ms，最长 ${fx(last.longest_ms, 0)} ms` : "";
+  $("vDraws").textContent = last && last.draws != null ? `现在 ${fx(last.draws, 0)}，每个绘制 ${fx(last.us_draw)} µs CPU` : "";
+  const fps = spansOf(W, w => w.fps);
+  REG.cFps = () => ({...base, min: 0, max: niceCeil(Math.max(20, ...fps.map(s => s[2]))), series: [{color: C.neutral, spans: fps, dot: true}],
+    tip: x => { const w = winAt(W, x); return w && {x: w.t - (w.dur || 0) / 2, title: winTitle(w), rows: [{color: C.neutral, value: fx(w.fps), name: "fps"}, {value: fx(w.frame_ms) + " ms", name: "一帧"},
+      {value: fx(w.longest_ms, 0) + " ms", name: "最长的一帧"}, {value: w.over50 == null ? "–" : String(w.over50), name: "超过 50 ms 的帧"}]}; }});
+  const parts = w => { if (w.rec_ms == null || w.wait_ms == null) return null; const kinds = w.ring_ms != null;
+    return [{color: C.walk, v: w.rec_ms, name: "录制（回放）"}].concat(kinds ? [{color: C.ring, v: w.ring_ms, name: `等环槽（每帧堵 ${fx(w.ring_blk, 2)} 次）`}, {color: C.arena, v: w.arena_ms, name: "等快照区"},
+      {color: C.fence, v: w.fence_ms, name: "等其它栅栏"}] : [{color: C.ring, v: w.wait_ms, name: "等 GPU"}], [{color: C.rest, v: Math.max(0, w.rest_ms || 0), name: "其余（游戏自己 + 回放之外）"}]); };
+  const bars = W.map(w => ({a: w.t - (w.dur || 0), b: w.t, parts: parts(w), w})).filter(b => b.parts);
+  REG.cSplit = () => ({...base, min: 0, max: niceCeil(Math.max(40, ...W.map(w => w.frame_ms || 0))), bars,
+    tip: x => { const w = winAt(W, x), p = w && parts(w); return p && {x: w.t - (w.dur || 0) / 2, title: `${winTitle(w)} · 一帧 ${fx(w.frame_ms)} ms`,
+      rows: p.map(q => ({color: q.color, value: `${fx(q.v, q.v < 1 ? 2 : 1)} ms`, name: `${q.name} ${pc(w.frame_ms ? q.v / w.frame_ms : null, 0)}`}))}; }});
+  const wc = spansOf(W, w => w.w_cpu), wo = spansOf(W, w => w.w_off);
+  REG.cWalk = () => ({...base, min: 0, max: niceCeil(Math.max(20, ...wc.map(s => s[2]), ...wo.map(s => s[2]))), series: [{color: C.ring, spans: wo}, {color: C.walk, spans: wc}],
+    tip: x => { const w = winAt(W, x); return w && {x: w.t - (w.dur || 0) / 2, title: winTitle(w), rows: [{color: C.walk, value: fx(w.w_cpu) + " ms", name: "在 CPU 上"}, {color: C.ring, value: fx(w.w_off) + " ms", name: "离开 CPU"},
+      {value: fx(w.wait_ms) + " ms", name: "其中等 GPU"}, {value: fx(w.join_ms) + " ms", name: "其中等录制工作线程"}, {value: fx(w.w_wall) + " ms", name: "墙上时间"}]}; }});
+  const dr = spansOf(W, w => w.draws);
+  REG.cDraws = () => ({...base, left: 46, min: 0, max: niceCeil(Math.max(100, ...dr.map(s => s[2]))), series: [{color: C.neutral, spans: dr}],
+    tip: x => { const w = winAt(W, x); return w && {x: w.t - (w.dur || 0) / 2, title: winTitle(w), rows: [{color: C.neutral, value: fx(w.draws, 0), name: "绘制 / 帧"}, {value: fx(w.passes, 0), name: "通道 / 帧"},
+      {value: fx(w.us_draw) + " µs", name: "每个绘制的回放 CPU"}]}; }});
+  const sa = spansOf(W, w => w.slots_all), ss = spansOf(W, w => w.small), sc = spansOf(W, w => w.chunks);
+  REG.cSlots = () => ({...base, min: 0, max: niceCeil(Math.max(10, ...sa.map(s => s[2]))), series: [{color: C.arena, spans: sc}, {color: C.vio, spans: ss}, {color: C.neutral, spans: sa}],
+    tip: x => { const w = winAt(W, x); return w && {x: w.t - (w.dur || 0) / 2, title: winTitle(w), rows: [{color: C.neutral, value: fx(w.slots_all, 2), name: "槽 / 帧"}, {color: C.vio, value: fx(w.small, 2), name: `小槽（不足 ${w.small_lim ?? 8} 个绘制）`},
+      {color: C.arena, value: fx(w.chunks, 2), name: "分块提交"}, {value: fx(w.subs), name: "游戏提交 / 帧"}, {value: w.ring == null ? "–" : String(w.ring), name: "环的格数"}, {value: fx(w.qsubmit_ms, 2) + " ms", name: "驱动 QueueSubmit / 帧"}]}; }});
+
+  // ④ CPU
+  cpu();
+  CLUSTERS.forEach(([name, ids, mx], k) => {
+    const top = D.cpu.topology.find(c => c.cpu === ids[0]), max = top ? top.max : mx, pts = sp.map(r => [r[0], r[3 + k]]), cur = lastSp ? lastSp[3 + k] : null;
+    $("vC" + k).textContent = cur != null ? `现在 ${fx(cur, 0)} / ${max}，负载 ${fx(lastSp[6 + k], 0)}%` : "";
+    REG["cC" + k] = () => ({...base, left: 46, min: 0, max: Math.ceil(max / 500) * 500, empty, refs: [{v: max, label: "上限 " + max}], series: [{color: C.vio, pts, gap: 8}],
+      tip: x => { const r = nearest(sp, x); return r && Math.abs(r[0] - x) < 10 ? {x: r[0], title: clock(r[0]), rows: [{color: C.vio, value: fx(r[3 + k], 0) + " MHz", name: name + "频率"}, {value: fx(r[6 + k], 0) + "%", name: "平均负载"}]} : null; }});
+  });
+  for (const id in REG) chart(id);
+  if (tl) strip();
+  table(W);
+  status(last);
+}
+
+function hero(w) {
+  if (!w) { $("hBusy").textContent = "–"; $("hIdle").textContent = "–"; return; }
+  $("hK").textContent = `最近 ${w.n} 帧（到帧 ${w.frame}）· ${ago(D.now - w.t)}`;
+  $("hBusy").textContent = pc(w.busy);
+  $("hSub").textContent = `GPU ${fx(w.gpu_ms)} ms ÷ 帧 ${fx(w.frame_ms)} ms（${fx(w.fps)} fps）`;
+  $("hIdle").textContent = fx(w.idle_ms);
+  const sp = $("hSplit"); sp.textContent = "";
+  if (w.busy != null) { const b = Math.min(1, Math.max(0, w.busy)), a = el("i"), c = el("i"); a.style.cssText = `width:${b * 100}%;background:var(--gpu)`; c.style.cssText = `width:${(1 - b) * 100}%;background:var(--idle)`; sp.append(a, c); }
+  const t = $("hTl"); t.textContent = "";
+  if (tlOk(w)) { t.append("时间线口径（", String(w.tl.n), " 帧）：逐帧精确 ", el("b", "", pc(w.tl.busy)), "，有活在手 ", el("b", "", pc(w.tl.pend_share)), "，空闲 ", el("b", "", fx(w.tl.idle) + " ms"));
+    if (w.tl.short > .05) t.append(`；${pc(w.tl.short, 0)} 的帧回放记录不全（上排有空段但槽还在封口）`); }
+  else if (w.tl) t.textContent = `时间线只有 ${w.tl.n} / ${w.n} 帧有行（只有超时的帧才写），不代表这一段`;
+  const s = $("hSys"); s.textContent = "";
+  if (w.sys) { const b = [];
+    if (w.sys.gpu_mhz != null) b.push(`GPU ${fx(w.sys.gpu_mhz, 0)} MHz（${fx(w.sys.gpu_mhz_min, 0)}–${fx(w.sys.gpu_mhz_max, 0)}）`);
+    if (w.sys.gpu_load != null) b.push(`gpuLoad ${fx(w.sys.gpu_load, 0)}%`);
+    if (w.sys.temp != null) b.push(`温控 ${w.sys.temp} 级`);
+    if (w.sys.bw != null) b.push(`带宽 ${fx(w.sys.bw)}`);
+    s.textContent = "这段时间里系统报的：" + b.join("，"); }
+}
+
+function overlap(list, x) { for (const p of list) if (x >= p[0] && x < p[1]) return p; return null; }
+function strip() {
+  const cv = $("cStrip"), tl = D.tl, rows = tl.frames, RH = 28, top = 4, PH = 62, axisH = 20;
+  const need = top + rows.length * RH + axisH + (tl.profile ? PH + 30 : 0) + 4;
+  if (cv.style.height !== need + "px") cv.style.height = need + "px";
+  const [g, W, H] = setup(cv), L = 112, R = 176, pw = W - L - R;
+  const xmax = Math.max(40, Math.ceil(Math.max(...rows.map(r => r.iv)) / 10) * 10), X = ms => L + ms / xmax * pw;
+  const yb = top + rows.length * RH;
+  g.font = FONT; g.lineWidth = 1;
+  const step = xmax > 160 ? 20 : 10;
+  for (let ms = 0; ms <= xmax; ms += step) {
+    const x = Math.round(X(ms)) + .5; g.strokeStyle = ms ? C.grid : C.axis; seg(g, x, top, x, yb + 2);
+    g.fillStyle = C.muted; g.textAlign = "center"; g.textBaseline = "top"; g.fillText(ms + (ms === xmax ? " ms" : ""), x, yb + 5);
+  }
+  rows.forEach((r, k) => {
+    const y = top + k * RH;
+    g.textBaseline = "middle"; g.textAlign = "left"; g.fillStyle = C.ink2; g.fillText("帧 " + r.frame, 0, y + 14);
+    g.textAlign = "right"; g.fillStyle = C.muted; g.fillText(fx(r.iv) + " ms", L - 8, y + 14);
+    g.fillStyle = C.walk; for (const w of r.walks) g.fillRect(X(Math.max(0, w[0])), y + 4, Math.max(1, X(Math.min(w[1], r.iv)) - X(Math.max(0, w[0]))), 6);
+    g.fillStyle = C.ink2; g.globalAlpha = .7; for (const s of r.slots) if (s[1] != null && s[1] >= 0 && s[1] <= r.iv) g.fillRect(Math.round(X(s[1])), y + 1, 1, 11); g.globalAlpha = 1;
+    if (!r.known) { g.fillStyle = C.rest; g.fillRect(X(0), y + 13, X(r.iv) - X(0), 11); }
+    g.fillStyle = C.idle; for (const p of r.idle) g.fillRect(X(p[0]), y + 13, Math.max(1.5, X(p[1]) - X(p[0])), 11);
+    g.fillStyle = C.gpu2; for (const p of r.carry) g.fillRect(X(p[0]), y + 13, Math.max(1, X(p[1]) - X(p[0])), 11);
+    g.fillStyle = C.gpu; for (const p of r.own) g.fillRect(X(p[0]), y + 13, Math.max(1, X(p[1]) - X(p[0])), 11);
+    g.fillStyle = C.ink; g.fillRect(Math.round(X(r.iv)), y + 2, 1.5, 24);
+    g.textAlign = "left"; g.fillStyle = C.ink2;
+    g.fillText(r.known ? `空闲 ${fx(r.idle_ms)} ms · GPU ${fx(r.gpu)} ms` : "前一帧不在日志里", W - R + 10, y + 14);
+  });
+  const p = tl.profile; let py0 = 0;
+  if (p && p.cover.length) {
+    py0 = yb + axisH + 26;
+    const n = p.n, Yp = v => py0 + PH - v * PH, use = p.cover.map(c => c >= Math.max(3, n * .15));
+    g.textAlign = "left"; g.textBaseline = "alphabetic"; g.fillStyle = C.ink2;
+    g.fillText(`到帧 ${p.frame} 的 ${n} 帧里，呈现后每个时刻有多少帧 GPU 是空闲的（橙）、有回放记录（绿线）`, L, py0 - 8);
+    for (const v of [0, .5, 1]) { const y = Math.round(Yp(v)) + .5; g.strokeStyle = v ? C.grid : C.axis; seg(g, L, y, L + pw, y); g.fillStyle = C.muted; g.textAlign = "right"; g.textBaseline = "middle"; g.fillText(v * 100 + "%", L - 8, y); }
+    const path = (arr, close) => { g.beginPath(); let on = false, x0 = 0, xl = 0;
+      for (let k = 0; k < arr.length; k++) { if (!use[k]) { if (on && close) { g.lineTo(xl, Yp(0)); g.lineTo(x0, Yp(0)); } on = false; continue; }
+        const x = X((k + .5) * p.bin), y = Yp(arr[k] / p.cover[k]); if (x > L + pw) break; if (on) g.lineTo(x, y); else { g.moveTo(x, y); x0 = x; } on = true; xl = x; }
+      if (on && close) { g.lineTo(xl, Yp(0)); g.lineTo(x0, Yp(0)); } };
+    g.globalAlpha = .28; g.fillStyle = C.idle; path(p.idle, true); g.fill(); g.globalAlpha = 1;
+    g.lineWidth = 2; g.lineJoin = "round"; g.strokeStyle = C.idle; path(p.idle, false); g.stroke();
+    g.strokeStyle = C.walk; path(p.walk, false); g.stroke(); g.lineWidth = 1;
+  }
+  const hv = HOV.cStrip;
+  if (hv && hv.px >= L && hv.px <= L + pw) {
+    const ms = (hv.px - L) / pw * xmax, k = Math.floor((hv.py - top) / RH), x = Math.round(hv.px) + .5;
+    g.strokeStyle = C.ink2; seg(g, x, top, x, py0 ? py0 + PH : yb);
+    let t = null;
+    if (k >= 0 && k < rows.length && ms <= rows[k].iv) {
+      const r = rows[k], rs = [], wi = r.walks.findIndex(w => ms >= w[0] && ms < w[1]), id = overlap(r.idle, ms), ca = overlap(r.carry, ms), ow = overlap(r.own, ms);
+      if (id) rs.push({color: C.idle, value: "GPU 空闲", name: `${fx(id[0])} → ${fx(id[1])} ms，共 ${fx(id[1] - id[0])} ms`});
+      else if (ca) rs.push({color: C.gpu2, value: "GPU 在做上一帧剩下的", name: `到 +${fx(ca[1])} ms`});
+      else if (ow) { const live = r.slots.filter(s => ms >= s[3] && ms < s[4]); rs.push({color: C.gpu, value: "GPU 在做本帧的提交", name: `${live.length} 个槽已提交未完成` + (live.length ? `，最早的槽 GPU ${fx(live[0][5])} ms` : "")}); }
+      else if (!r.known) rs.push({value: "GPU 状态未知", name: "前一帧不在日志里"});
+      rs.push(wi >= 0 ? {color: C.walk, value: "回放线程在回放", name: `第 ${wi + 1} 次，${fx(r.walks[wi][0])} → ${fx(r.walks[wi][1])} ms，CPU ${fx(r.walks[wi][2])} ms` } : {value: "这一刻没有回放记录", name: r.unrec >= 3 ? `但本帧有 ${r.unrec} 个槽是在记录之外封口的：这一帧的回放没记全` : "游戏主线程在算逻辑，或回放已交完"});
+      rs.push({value: `${r.draws} 绘制 · ${r.slots.length} 槽`, name: `回放墙上 ${fx(r.walk)} ms（等待 ${fx(r.join)} ms），封口到提交最长 ${fx(r.sublat)} ms`});
+      t = {title: `帧 ${r.frame} · 呈现后 +${fx(ms)} ms（本帧间隔 ${fx(r.iv)} ms）`, rows: rs};
+    } else if (p && py0 && hv.py >= py0 - 4) {
+      const b = Math.floor(ms / p.bin);
+      if (b < p.cover.length && p.cover[b]) t = {title: `呈现后 +${fx(b * p.bin, 0)}–${fx((b + 1) * p.bin, 0)} ms（${p.cover[b]} 帧到得了这里）`, rows: [
+        {color: C.idle, value: pc(p.idle[b] / p.cover[b], 0), name: "的帧此刻 GPU 空闲"}, {color: C.walk, value: pc(p.walk[b] / p.cover[b], 0), name: "的帧此刻有回放记录"}]};
+    }
+    if (t) showTip(cv, hv.px, hv.py, t); else hideTip();
+  }
+}
+
+function spark(cv, pts, t0, t1, max, color, stepped) {
+  const [g, W, H] = setup(cv); if (!pts.length) return;
+  g.strokeStyle = color; g.lineWidth = 1.5; g.lineJoin = "round"; g.beginPath(); let py = null;
+  pts.forEach((p, k) => { const x = t1 > t0 ? (p[0] - t0) / (t1 - t0) * W : k / Math.max(1, pts.length - 1) * W, y = H - 2 - Math.min(1, p[1] / max) * (H - 4);
+    if (k === 0) g.moveTo(x, y); else { if (stepped) g.lineTo(x, py); g.lineTo(x, y); } py = y; });
+  if (stepped && t1 > t0) g.lineTo(Math.min(W, (pts[pts.length - 1][0] + 5 - t0) / (t1 - t0) * W), py);
+  g.stroke();
+}
+function meters(dev, t0, t1) {
+  const box = $("meters"), last = dev[dev.length - 1]; box.textContent = "";
+  $("vDev").textContent = last ? `${ago(D.now - last[0])}（${clock(last[0])}）` : D.mode === "replay" && !(D.replay && D.replay.sys) ? "回放里没有" : "还没有";
+  const temp = v => v == null ? "–" : v <= 1 ? "正常" : v <= 3 ? "偏热" : "过热";
+  for (const [name, col, max] of [["总负载", 2, 10], ["带宽", 6, 10], ["片元", 4, 10], ["顶点", 3, 10], ["纹理", 5, 10], ["温控", 1, 6]]) {
+    const v = last ? last[col] : null, tr = el("div", "track"), f = el("i"), cv = el("canvas");
+    f.style.width = (v == null ? 0 : Math.min(1, v / max) * 100) + "%";
+    if (col === 1) f.style.background = v == null || v <= 1 ? "var(--good)" : v <= 3 ? "var(--warn)" : "var(--crit)";
+    tr.appendChild(f);
+    box.append(el("div", "nm", name), tr, el("div", "val", v == null ? "–" : col === 1 ? `${v} ${temp(v)}` : `${v} / ${max}`), cv);
+    spark(cv, dev.filter(r => r[col] != null).map(r => [r[0], r[col]]), t0, t1, max, col === 1 ? C.neutral : C.gpu, true);
+  }
+}
+
+function cpu() {
+  const box = $("cores"), cores = D.sp.cores, topo = D.cpu.topology, pins = D.cpu.pins;
+  const ids = cores.length ? cores.map(c => c.i) : topo.length ? topo.map(c => c.cpu) : CLUSTERS.flatMap(c => c[1]);
+  const by = Object.fromEntries(cores.map(c => [c.i, c])), maxOf = i => (topo.find(c => c.cpu === i) || {}).max || (CLUSTERS.find(c => c[1].includes(i)) || [0, 0, 2750])[2];
+  const firsts = new Set(CLUSTERS.map(c => c[1][0]).filter(i => i !== ids[0]));
+  box.style.setProperty("--n", ids.length); box.textContent = "";
+  const cell = (i, cls) => el("div", "c" + (firsts.has(i) ? " first" : "") + (cls ? " " + cls : ""));
+  box.appendChild(el("div", "lab", ""));
+  for (const [name, list] of CLUSTERS) { const have = list.filter(i => ids.includes(i)); if (!have.length) continue; const h = el("div", "clu", `${name} ${have[0]}–${have[have.length - 1]}`); h.style.gridColumn = "span " + have.length; box.appendChild(h); }
+  const rest = ids.filter(i => !CLUSTERS.some(c => c[1].includes(i))); if (rest.length) { const h = el("div", "clu", "其它"); h.style.gridColumn = "span " + rest.length; box.appendChild(h); }
+  box.appendChild(el("div", "lab", "逻辑 CPU")); for (const i of ids) { const c = cell(i, "hd"); c.textContent = i; box.appendChild(c); }
+  box.appendChild(el("div", "lab", "频率 MHz"));
+  for (const i of ids) { const c = cell(i), v = by[i] && by[i].mhz; if (v != null) { const f = el("div", "f"); f.style.width = Math.min(100, v / maxOf(i) * 100) + "%"; c.appendChild(f); } c.appendChild(el("span", "", v == null ? "–" : fx(v, 0))); c.title = `cpu${i}：上限 ${maxOf(i)} MHz`; box.appendChild(c); }
+  box.appendChild(el("div", "lab", "负载 %（近 10 次平均）"));
+  const mean10 = i => { const h = (D.sp.hist[i] || []).slice(-10).map(x => x[1]).filter(x => x != null); return h.length ? h.reduce((a, b) => a + b, 0) / h.length : null; };
+  for (const i of ids) { const c = cell(i), v = mean10(i); c.title = by[i] && by[i].load != null ? `cpu${i}：最近一次采样 ${fx(by[i].load, 0)}%（SP_daemon 单次采样的负载很粗，所以这里取平均）` : ""; if (v != null) { const h = el("div", "h"); h.style.opacity = Math.min(1, v / 100) * .55; c.appendChild(h); } c.appendChild(el("span", "", v == null ? "–" : fx(v, 0))); box.appendChild(c); }
+  if (cores.length) { box.appendChild(el("div", "lab", "负载 近 60 次采样")); const cvs = [];
+    for (const i of ids) { const c = cell(i), cv = el("canvas"); c.appendChild(cv); box.appendChild(c); cvs.push([cv, i]); }
+    for (const [cv, i] of cvs) spark(cv, (D.sp.hist[i] || []).map((h, k) => [k, h[1] || 0]), 0, 0, 100, C.vio, false); }
+  for (const p of pins) {
+    const lab = el("div", "lab", `${p.role === 2 ? "游戏主线程" : p.role === 1 ? "回放线程" : p.name} ${p.tid}`);
+    lab.title = `${p.name} tid ${p.tid} role ${p.role}：QoS ${p.qos}，nice ${p.nice}，uclamp ${p.uclamp}，亲和（物理核）${p.mask}；最近 10 秒落在各逻辑 CPU 上的占比`;
+    box.appendChild(lab);
+    for (const i of ids) { const c = cell(i), v = p.cpus[i]; if (v) { const h = el("div", "h"); h.style.opacity = Math.min(1, v / 100) * .8 + .08; c.appendChild(h); } c.appendChild(el("span", "", v ? v + "%" : "")); box.appendChild(c); }
+  }
+  if (!pins.length) { const n = el("div", "lab", "关键线程"); box.appendChild(n); const c = el("div", "c hd", "运行日志里还没有 [ohos-pin] … ran on 行"); c.style.gridColumn = "span " + ids.length; c.style.textAlign = "left"; box.appendChild(c); }
+  const sp = D.cpu.spin, s = sp[sp.length - 1], line = $("spin"); line.textContent = "";
+  if (s) {
+    const groups = []; for (const c of topo) if (!groups.includes(c.sib)) groups.push(c.sib);
+    const where = groups[s.cpu] != null ? `物理核 ${s.cpu}（逻辑 CPU ${groups[s.cpu]}）` : `物理核 ${s.cpu}`;
+    line.append("频率保持线程：最近 ", String(s.win), " 秒空转 ", el("b", "", fx(s.spun) + " s"), "、睡眠 ", el("b", "", fx(s.slept) + " s"), `，现在在${where}`);
+    if (sp.length > 1) line.append(`；之前几次空转 ${sp.slice(0, -1).map(x => fx(x.spun)).join(" / ")} s`);
+    if (D.cpu.keeper) line.append(" · ", D.cpu.keeper);
+  } else line.textContent = D.cpu.keeper ? "频率保持线程：" + D.cpu.keeper : "运行日志里还没有 [ohos-spin] 行";
+}
+
+function table(W) {
+  const head = ["结束", "到帧", "fps", "帧 ms", "GPU ms", "忙碌", "空闲", "录制", "等 GPU", "其余", "回放 CPU", "离 CPU", "绘制", "槽", "小槽", "分块", "逐帧", "有活在手", "GPU MHz", "负载", "温控", "带宽"];
+  const t = $("tbl"); t.textContent = "";
+  const tr = el("tr"); for (const h of head) tr.appendChild(el("th", "", h)); t.appendChild(tr);
+  for (const w of W.slice(-12).reverse()) {
+    const s = w.sys || {}, tl = tlOk(w) ? w.tl : {}, r = el("tr");
+    for (const v of [clock(w.t), w.frame, fx(w.fps), fx(w.frame_ms), fx(w.gpu_ms), pc(w.busy), fx(w.idle_ms), fx(w.rec_ms), fx(w.wait_ms), fx(w.rest_ms), fx(w.w_cpu), fx(w.w_off), fx(w.draws, 0),
+      fx(w.slots_all), fx(w.small), fx(w.chunks), pc(tl.busy), pc(tl.pend_share), fx(s.gpu_mhz, 0), s.gpu_load == null ? "–" : fx(s.gpu_load, 0) + "%", s.temp ?? "–", fx(s.bw)]) r.appendChild(el("td", "", String(v)));
+    t.appendChild(r);
+  }
+  if (!W.length) { const r = el("tr"), d = el("td", "", "这段时间里还没有 300 帧窗口"); d.colSpan = head.length; r.appendChild(d); t.appendChild(r); }
+}
+
+function status(last) {
+  const box = $("status"); box.textContent = "";
+  const add = (cls, label, text) => { const s = el("span", "st"); s.append(el("span", "dot " + cls), el("b", "", label), " " + text); box.appendChild(s); };
+  if (!linkOk) add("bad", "面板服务", `没有响应（perfdash.py 还在运行吗？）下面是 ${ago((Date.now() - lastOk) / 1000)}的最后一次数据`);
+  if (D.mode === "replay") {
+    const r = D.replay; add(r.done ? "ok" : "old", "回放", `${r.file}，×${r.speed}，共 ${r.seconds} 秒的游戏时间，${r.done ? "已放完" : "进行中"}` + (r.sys ? `；系统采样 ${r.sys}` : "；没有系统采样"));
+  } else for (const [key, name] of [["log", "运行日志"], ["sp", "SP_daemon"], ["hilog", "hilog"]]) {
+    const s = D.status[key];
+    if (s.ok === true) add(s.age != null && s.age > 20 ? "old" : "ok", name, `正常，${ago(s.age)}；${s.msg}`);
+    else if (s.ok === false) add("bad", name, `失败：${s.msg}` + (s.age != null ? `（上次成功 ${ago(s.age)}）` : "（还没成功过）"));
+    else add("", name, s.msg || "等待中");
+  }
+  const b = $("banner"), old = last ? D.now - last.t : null;
+  if (D.mode !== "replay" && last && old > 90) { b.style.display = "block"; b.textContent = `最近一个 300 帧窗口是 ${ago(old)}的：游戏暂停了、没在跑，或手机没连上。图上保留着最后的数据。`; }
+  else if (!last) { b.style.display = "block"; b.textContent = D.mode === "replay" ? "回放刚开始，还没有 300 帧窗口。" : "还没有收到 300 帧窗口：游戏进到画面后每 300 帧出一段。"; }
+  else b.style.display = "none";
+}
+
+async function tick() {
+  try {
+    const r = await fetch("/api?span=" + SPAN, {cache: "no-store"}); if (!r.ok) throw new Error(r.status);
+    D = await r.json(); linkOk = true; lastOk = Date.now();
+  } catch (e) { linkOk = false; if (!D) { $("status").textContent = "面板服务没有响应（perfdash.py 是否在运行？）"; return; } }
+  try { render(); } catch (e) { $("banner").style.display = "block"; $("banner").textContent = "页面出错：" + e.message; console.error(e); }
+}
+for (const id of ["cBusy", "cIdle", "cPF", "cPI", "cLoad", "cFreq", "cFps", "cSplit", "cWalk", "cDraws", "cSlots", "cC0", "cC1", "cC2"]) bindHover(id, i => { if (D) { colors(); chart(i); } });
+bindHover("cStrip", () => { if (D && D.tl) { colors(); strip(); } });
+$("spans").addEventListener("click", e => { const s = e.target.dataset && e.target.dataset.s; if (!s) return; SPAN = +s; for (const b of $("spans").children) b.classList.toggle("on", b === e.target); tick(); });
+function theme(t) { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; for (const b of $("themes").children) b.classList.toggle("on", (b.dataset.t || "") === (t || "")); try { localStorage.setItem("perfdash-theme", t || ""); } catch (e) {} if (D) render(); }
+$("themes").addEventListener("click", e => { if (e.target.dataset && e.target.dataset.t != null) theme(e.target.dataset.t); });
+let saved = ""; try { saved = localStorage.getItem("perfdash-theme") || ""; } catch (e) {}
+theme(saved);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (D) render(); });
+addEventListener("resize", () => { if (D) render(); });
+tick(); setInterval(tick, 2000);
+</script>
+</body>
+</html>
