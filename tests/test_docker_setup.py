@@ -406,7 +406,10 @@ class Outcome(Base):
     def test_a_fix_that_waits_is_not_a_failure(self):
         notes = []
         rows = [doctor.Check("docker", "Docker Desktop 在运行", False, "", lambda: doctor._wait("WSL 刚装好，要重启电脑"))]
-        with mock.patch.object(doctor, "checks", return_value=[]):
+        import contextlib
+        import io
+        with mock.patch.object(doctor, "checks", return_value=[]), \
+                contextlib.redirect_stdout(io.StringIO()):   # its console lines are Chinese; CI's console is cp1252
             doctor.fix(rows, report=notes.append)
         self.assertEqual([n["kind"] for n in notes], ["item", "wait", "recheck"])
         self.assertIn("重启电脑", notes[1]["why"])
@@ -415,7 +418,7 @@ class Outcome(Base):
         """Installed with --installation-dir: Docker Desktop.exe sits three folders above resources\\bin\\docker.exe."""
         import tempfile
         with tempfile.TemporaryDirectory() as d:
-            root = Path(d)
+            root = Path(d).resolve()   # the long form: %TEMP% may be a short name (RUNNER~1), the lookup resolves
             (root / "resources" / "bin").mkdir(parents=True)
             (root / "resources" / "bin" / "docker.exe").write_bytes(b"")
             (root / "Docker Desktop.exe").write_bytes(b"")
