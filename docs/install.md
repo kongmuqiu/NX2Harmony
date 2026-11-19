@@ -46,18 +46,18 @@ Once read they are kept for every game. With a Tears of the Kingdom `.xci` as th
 
 Two ways to the same checks:
 - **The Environment (环境) page** of the program. Every row is a check; **一键安装缺少的** (install what is missing) installs, with winget, everything that needs no account, and **重新检查** (check again) runs the checks again. A row you have to download yourself has an **打开下载页** (open the download page) button.
-- **`一键安装环境.cmd`**, double-clicked in the checkout when you run from source (the packed program has no such file: use its Environment page or `nx2h.exe setup --fix`). When `where python` finds no Python, it first installs Python 3.12 with winget and asks you to close the window and double-click it again; then it runs the same checks and installs (`python nx2h.py setup --fix`). The Microsoft Store's `python` alias counts as found, so on a PC where `python -V` prints nothing, opens the Store or says Python was not found, install Python yourself first (`winget install -e --id Python.Python.3.12` in a terminal), then double-click the file again.
+- **`一键安装环境.cmd`**, double-clicked in the checkout when you run from source (the packed program has no such file: use its Environment page or `nx2h.exe setup --fix`). When `where python` finds no Python, it first installs Python 3.12 with winget and asks you to close the window and double-click it again; then it runs the same checks and installs (`python nx2h.py setup --fix`). The Microsoft Store's `python` alias counts as found, so on a PC where `python -V` prints nothing, opens the Store or says Python was not found, install Python yourself first (`winget install -e --id Python.Python.3.12 --source winget` in a terminal), then double-click the file again.
 
 What is installed for you, when it is missing:
 
 | Item | When | How |
 |---|---|---|
-| Python 3.9 or newer | always: it runs the backends' scripts (the packed program carries a Python only for itself) | `winget install Python.Python.3.12` |
-| Docker Desktop, running | always: the Linux tools run in containers | `winget install Docker.DockerDesktop`; the next **一键安装缺少的** (or `setup --fix`) starts it and waits up to 3 minutes. If it is still not ready, open it: it may need WSL 2 installed or Windows restarted |
-| zstd | Ocarina of Time (its shader list) | `winget install Meta.Zstandard` |
-| PowerShell 7 | only to build libopus when no prebuilt one is there (`backends\prebuilt-ohos` brings one, in a checkout and in the full package) | `winget install Microsoft.PowerShell` |
-| Git | only for a source checkout whose reference project totk-android must be cloned | `winget install Git.Git` |
-| Java | only when the DevEco Studio in use has no Java of its own | `winget install Microsoft.OpenJDK.21` |
+| Python 3.9 or newer | always: it runs the backends' scripts (the packed program carries a Python only for itself) | `winget install -e --id Python.Python.3.12 --source winget` |
+| Docker Desktop, running | always: the Linux tools run in containers | `winget install -e --id Docker.DockerDesktop --source winget`; the next **一键安装缺少的** (or `setup --fix`) starts it and waits up to 3 minutes. If it is still not ready, open it: it may need WSL 2 installed or Windows restarted |
+| zstd | Ocarina of Time (its shader list) | `winget install -e --id Meta.Zstandard --source winget` |
+| PowerShell 7 | only to build libopus when no prebuilt one is there (`backends\prebuilt-ohos` brings one, in a checkout and in the full package) | `winget install -e --id Microsoft.PowerShell --source winget` |
+| Git | only for a source checkout whose reference project totk-android must be cloned | `winget install -e --id Git.Git --source winget` |
+| Java | only when the DevEco Studio in use has no Java of its own | `winget install -e --id Microsoft.OpenJDK.21 --source winget` |
 | totk-android at its pinned commit | source checkouts, cloned into `backends\totk-android` (the full package brings its own copy) | the backend's `native-harmonyos/upstream.py` |
 | Huawei account login | for signing; offered once DevEco Studio is installed | opens the login page in your browser |
 
@@ -66,7 +66,7 @@ What you do yourself:
 - **nxnative**, for Ocarina of Time when you run from source: clone [nxnative](https://github.com/seedds/nxnative) into `backends\nxnative` or beside this repository and check out the commit `backends/SOURCES.tsv` names, or name its place as `"nxnative"` in `nx2h.local.json`. The game backends themselves, NativeGames-harmonyos (Tears of the Kingdom), LZA (Z-A) and OOT (Ocarina of Time), are part of the checkout, in `backends\`; the full package carries them, nxnative and totk-android in its own `backends\`. Without a backend, its game is recognized but not built.
 
 Starting the program:
-- **Packed:** `NX2Harmony.exe` in the NX2Harmony folder: the full package from this repository's Releases page (`NX2Harmony-0.1.2-windows-x64-full.zip`, unzip it anywhere), or `dist\NX2Harmony` after packing. The folder is portable: copy it anywhere and its settings go with it in `data\`. `nx2h.exe` beside it is the command line.
+- **Packed:** `NX2Harmony.exe` in the NX2Harmony folder: the full package from this repository's Releases page (`NX2Harmony-0.1.3-windows-x64-full.zip`, unzip it anywhere), or `dist\NX2Harmony` after packing. The folder is portable: copy it anywhere and its settings go with it in `data\`. `nx2h.exe` beside it is the command line.
 - **From source:** with Python 3.9 or newer installed, double-click `NX2Harmony.cmd`. Its first start installs PySide6 and cryptography from `requirements.txt` (about 80 MB).
 - **Packing it yourself:** `python packaging/build.py`, in a Python with the packages of `packaging/requirements-build.txt` (PyInstaller, PySide6-Essentials, Pillow, cryptography). The result is `dist\NX2Harmony`; its `data\` is kept across packings. A full package for a clean PC: `python packaging/full_bundle.py --out <folder> [--zip]` ([how-it-works.md](how-it-works.md#the-full-package)).
 
@@ -197,6 +197,7 @@ The messages are in Chinese; the table gives how each begins.
 | `需要 prod.keys` | Choose its folder (`-k`), or put it in `%USERPROFILE%\.switch`. |
 | `没有找到连接的手机` (no phone) | [Set up the phone](#set-up-the-phone), or build with `--no-install`. |
 | `构建要用本机的 Python 3.9 或更新版本` | Install Python on the Environment page, then open the program again. |
+| `自动安装没成功：退出码 0x8A15005E…` (install failed: certificate) | Something on the PC replaces HTTPS certificates (an accelerator, an antivirus's HTTPS scanning, a proxy) and winget's Microsoft Store source refuses it. From 0.1.3 the program installs from the winget source only; with an older one, run the command the row names in a terminal (`winget install -e --id <package> --source winget`), or switch that scanning off. |
 | `后台签名没成功` (background signing failed) | Check the Huawei account (developer, real-name verified) and build again, or sign in DevEco Studio ([Signing](#signing)). |
 | `Docker 镜像 … 都没拉下来`, `… 建了 … 次都没成功` (image) | The network: build again later. |
 | `…这一步要用 Docker Desktop` | Start Docker Desktop (the Environment page installs and starts it). |

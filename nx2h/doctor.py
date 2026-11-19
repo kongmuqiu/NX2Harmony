@@ -156,11 +156,19 @@ def _tool(cmd) -> bool:
     return True
 
 
+def winget_cmd(pkg: str) -> str:
+    """The install command for a package, as the app runs it and as a player types it: from the winget source only.
+    Without --source winget the Microsoft Store source is searched too; it pins its server certificate, so anything
+    on the PC that replaces HTTPS certificates (an accelerator, an antivirus's HTTPS scanning, a proxy) makes the
+    whole install fail with 0x8A15005E, although the package comes from the winget source."""
+    return f"winget install -e --id {pkg} --source winget"
+
+
 def _winget(pkg: str) -> Callable[[], bool]:
     def fix() -> bool:
-        _say(f"  winget install {pkg} ...")
-        return _tool(["winget", "install", "-e", "--id", pkg, "--silent", "--accept-package-agreements",
-                      "--accept-source-agreements"])
+        _say(f"  {winget_cmd(pkg)} ...")
+        return _tool(winget_cmd(pkg).split() + ["--silent", "--accept-package-agreements",
+                                                "--accept-source-agreements"])
     return fix
 
 
@@ -275,7 +283,7 @@ def java_checks(found, java_ok: bool) -> list:
         return []
     return [Check("java", "Java（签名和打包用）", False,
                   f"未找到：{found.use.root} 里没有 jbr，PATH、JAVA_HOME 和常见安装位置也没有 Java {device.JAVA_MIN} 或更新的版本",
-                  _winget(JAVA_PKG), f"winget install {JAVA_PKG}")]
+                  _winget(JAVA_PKG), winget_cmd(JAVA_PKG))]
 
 
 def gb_text(free: float, need: float) -> str:
@@ -330,7 +338,7 @@ def upstream_checks(backend: str, root: Path, code: int) -> list:
     out = [Check("upstream", label, False, f"{state}：{up}", ensure_upstream,
                  " ".join(["python native-harmonyos/upstream.py"] + args))]
     if code == 1 and not shutil.which("git"):   # the clone needs Git; nothing else this app runs does
-        out.insert(0, Check("git", "Git（取参考仓库用）", False, "未安装", _winget("Git.Git"), "winget install Git.Git"))
+        out.insert(0, Check("git", "Git（取参考仓库用）", False, "未安装", _winget("Git.Git"), winget_cmd("Git.Git")))
     return out
 
 
@@ -346,11 +354,11 @@ def checks() -> list:
     pyver = sys.version.split()[0] if not config.FROZEN else (_run([py, "-c", "import sys; print(sys.version.split()[0])"]).stdout.strip() if py else "")
     py_ok = bool(pyver) and tuple(int(x) for x in pyver.split(".")[:2]) >= (3, 9)
     out.append(Check("python", "Python 3.9 或更新（运行构建脚本）", py_ok, f"{pyver} · {py}" if py_ok else "未找到",
-                     _winget("Python.Python.3.12"), "winget install Python.Python.3.12"))
+                     _winget("Python.Python.3.12"), winget_cmd("Python.Python.3.12")))
     srv = docker_server()
     out.append(Check("docker", "Docker Desktop 在运行", bool(srv), f"服务端 {srv}" if srv else
                      ("已安装但没在运行" if DOCKER_DESKTOP.is_file() or shutil.which("docker") else "未安装"),
-                     _start_docker, "winget install Docker.DockerDesktop，装好后启动一次（WSL 2）"))
+                     _start_docker, winget_cmd("Docker.DockerDesktop") + "，装好后启动一次（WSL 2）"))
     found = device.find_deveco(refresh=True)   # looked for again: DevEco Studio may have been installed meanwhile
     hdc = Hdc()
     sdk = sdk_dir()
@@ -399,7 +407,7 @@ def checks() -> list:
         for be in bes:   # a backend whose steps still to run need the zstd program (Ocarina of Time's shader list)
             if getattr(be, "needs_zstd", None) and be.needs_zstd() and not be.zstd():
                 out.append(Check("zstd", f"zstd（{be.name}的着色器清单用）", False, "未安装", _winget("Meta.Zstandard"),
-                                 "winget install Meta.Zstandard"))
+                                 winget_cmd("Meta.Zstandard")))
                 break
         from .backends.common import BaseBackend
         opus = BaseBackend.PREBUILT["native-opus"]   # the package's prebuilt libopus (backends/prebuilt-ohos) needs no build
@@ -407,7 +415,7 @@ def checks() -> list:
                for be in bes):
             pw = os.environ.get("TOTK_PWSH") or shutil.which("pwsh")
             out.append(Check("pwsh", "PowerShell 7（编译 libopus 用）", bool(pw), pw or "未安装",
-                             _winget("Microsoft.PowerShell"), "winget install Microsoft.PowerShell"))
+                             _winget("Microsoft.PowerShell"), winget_cmd("Microsoft.PowerShell")))
         need_keys = any(be.needs_keys() for be in bes)
         keys = config.key_candidates()
         keys_ok = bool(keys) if need_keys else (True if keys else None)   # not needed once the game data is prepared

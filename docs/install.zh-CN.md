@@ -46,18 +46,18 @@
 
 两种做法，检查的内容相同：
 - **软件的“环境”页**：每一行是一项检查；「一键安装缺少的」用 winget 装好所有不需要账号的东西，「重新检查」再查一遍。需要你自己下载的那一行有「打开下载页」按钮。
-- **从源码运行时，双击仓库目录里的 `一键安装环境.cmd`**（打包版没有这个文件，用“环境”页或 `nx2h.exe setup --fix`）：`where python` 找不到 Python 时，先用 winget 装 Python 3.12，并提示你关掉窗口再双击一次；之后做同样的检查和安装（`python nx2h.py setup --fix`）。微软商店的 `python` 别名也算“找到了”，所以如果 `python -V` 什么都不显示、打开了微软商店或提示找不到 Python，先自己在终端里运行 `winget install -e --id Python.Python.3.12` 装好 Python，再双击一次这个文件。
+- **从源码运行时，双击仓库目录里的 `一键安装环境.cmd`**（打包版没有这个文件，用“环境”页或 `nx2h.exe setup --fix`）：`where python` 找不到 Python 时，先用 winget 装 Python 3.12，并提示你关掉窗口再双击一次；之后做同样的检查和安装（`python nx2h.py setup --fix`）。微软商店的 `python` 别名也算“找到了”，所以如果 `python -V` 什么都不显示、打开了微软商店或提示找不到 Python，先自己在终端里运行 `winget install -e --id Python.Python.3.12 --source winget` 装好 Python，再双击一次这个文件。
 
 缺少时会自动装的：
 
 | 项 | 什么时候需要 | 怎么装 |
 |---|---|---|
-| Python 3.9 或更新 | 总要：运行后端的脚本（打包版自带的 Python 只给软件自己用） | `winget install Python.Python.3.12` |
-| Docker Desktop，并在运行 | 总要：Linux 工具在容器里运行 | `winget install Docker.DockerDesktop`；再点一次「一键安装缺少的」（或 `setup --fix`）会启动它，最多等 3 分钟。还没就绪就打开它看看，可能要先装 WSL 2 或重启 Windows |
-| zstd | 时之笛（着色器清单） | `winget install Meta.Zstandard` |
-| PowerShell 7 | 只在没有预编译 libopus、要自己编译时（`backends\prebuilt-ohos` 里自带一份，源码和完整包都有） | `winget install Microsoft.PowerShell` |
-| Git | 只在从源码运行、参考仓库 totk-android 要克隆时 | `winget install Git.Git` |
-| Java | 只在所用的 DevEco Studio 不带自己的 Java 时 | `winget install Microsoft.OpenJDK.21` |
+| Python 3.9 或更新 | 总要：运行后端的脚本（打包版自带的 Python 只给软件自己用） | `winget install -e --id Python.Python.3.12 --source winget` |
+| Docker Desktop，并在运行 | 总要：Linux 工具在容器里运行 | `winget install -e --id Docker.DockerDesktop --source winget`；再点一次「一键安装缺少的」（或 `setup --fix`）会启动它，最多等 3 分钟。还没就绪就打开它看看，可能要先装 WSL 2 或重启 Windows |
+| zstd | 时之笛（着色器清单） | `winget install -e --id Meta.Zstandard --source winget` |
+| PowerShell 7 | 只在没有预编译 libopus、要自己编译时（`backends\prebuilt-ohos` 里自带一份，源码和完整包都有） | `winget install -e --id Microsoft.PowerShell --source winget` |
+| Git | 只在从源码运行、参考仓库 totk-android 要克隆时 | `winget install -e --id Git.Git --source winget` |
+| Java | 只在所用的 DevEco Studio 不带自己的 Java 时 | `winget install -e --id Microsoft.OpenJDK.21 --source winget` |
 | totk-android 在固定提交 | 从源码运行时，克隆到 `backends\totk-android`（完整包自带一份） | 后端的 `native-harmonyos/upstream.py` |
 | 登录华为账号 | 签名用；装好 DevEco Studio 后才提供 | 在浏览器里打开登录页 |
 
@@ -66,7 +66,7 @@
 - **nxnative**（从源码运行、构建时之笛时）：把 [nxnative](https://github.com/seedds/nxnative) 克隆到 `backends\nxnative` 或本仓库旁边，检出 `backends/SOURCES.tsv` 记的提交；也可以在 `nx2h.local.json` 里写成 `"nxnative"`。游戏后端本身，NativeGames-harmonyos（王国之泪）、LZA（Z-A）、OOT（时之笛），就在仓库的 `backends\` 里；完整包把它们连同 nxnative 和 totk-android 都放在自己的 `backends\` 里。缺后端时，对应的游戏能识别，但不能构建。
 
 打开软件：
-- **打包版：** NX2Harmony 文件夹里的 `NX2Harmony.exe`：本仓库 Releases 页面上的完整包（`NX2Harmony-0.1.2-windows-x64-full.zip`，解压到任意位置），或打包后的 `dist\NX2Harmony`。整个文件夹是便携的，拷到哪里，设置都在 `data\` 里跟着走。旁边的 `nx2h.exe` 是命令行版。
+- **打包版：** NX2Harmony 文件夹里的 `NX2Harmony.exe`：本仓库 Releases 页面上的完整包（`NX2Harmony-0.1.3-windows-x64-full.zip`，解压到任意位置），或打包后的 `dist\NX2Harmony`。整个文件夹是便携的，拷到哪里，设置都在 `data\` 里跟着走。旁边的 `nx2h.exe` 是命令行版。
 - **从源码：** 装好 Python 3.9 或更新版本后，双击 `NX2Harmony.cmd`。第一次打开时会装 `requirements.txt` 里的 PySide6 和 cryptography（约 80 MB）。
 - **自己打包：** 在装了 `packaging/requirements-build.txt` 里那些包（PyInstaller、PySide6-Essentials、Pillow、cryptography）的 Python 里运行 `python packaging/build.py`。结果在 `dist\NX2Harmony`，里面的 `data\` 重新打包时会保留。给一台全新电脑用的完整包：`python packaging/full_bundle.py --out <文件夹> [--zip]`（见 [how-it-works.zh-CN.md](how-it-works.zh-CN.md#完整包)）。
 
@@ -195,6 +195,7 @@ DevEco Studio 要装着，但不用打开。用的是 DevEco Studio 自动签名
 | `需要 prod.keys` | 选它所在的文件夹（`-k`），或放到 `%USERPROFILE%\.switch`。 |
 | `没有找到连接的手机` | 见[准备手机](#准备手机)；或者加 `--no-install` 只出包。 |
 | `构建要用本机的 Python 3.9 或更新版本` | 在“环境”页装 Python，然后重新打开软件。 |
+| `自动安装没成功：退出码 0x8A15005E…` | 电脑上有东西替换了 HTTPS 证书（加速器、杀毒软件的 HTTPS 扫描、代理），winget 的微软商店源不认。0.1.3 起软件只从 winget 社区源安装；用旧版本时，在终端里运行那一行写的命令（`winget install -e --id <包名> --source winget`），或者关掉这类扫描。 |
 | `后台签名没成功` | 检查华为账号（开发者、已实名认证）后再构建，或在 DevEco Studio 里签（见[签名](#签名)）。 |
 | `Docker 镜像 … 都没拉下来`、`… 建了 … 次都没成功` | 网络问题：过一会儿再构建。 |
 | `…这一步要用 Docker Desktop` | 启动 Docker Desktop（“环境”页会装好并启动）。 |

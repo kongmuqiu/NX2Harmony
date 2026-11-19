@@ -136,7 +136,7 @@ def cmd_build(a) -> int:
         ev.red("没有找到连接的手机（setup 里有开启开发者模式和 USB 调试的步骤）；只想出包可以加 --no-install")
         return 1
     if not config.python():
-        ev.red("构建要用本机的 Python 3.9 或更新版本来运行后端脚本：在“环境”页一键安装（或 winget install Python.Python.3.12），装好后重新打开软件")
+        ev.red("构建要用本机的 Python 3.9 或更新版本来运行后端脚本：在“环境”页一键安装（或 winget install -e --id Python.Python.3.12 --source winget），装好后重新打开软件")
         return 1
     # the phone's screen stays on from here (signing, the build, the install, the push) until the game is open, then
     # gets its own screen-off time back, also after a failure (keep_awake); the app hears it (ev.awake) to put it back

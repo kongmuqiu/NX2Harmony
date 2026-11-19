@@ -362,7 +362,7 @@ class Backend(BaseBackend):
                 if r.returncode == 0 and len(r.stdout.split()) == 1:
                     return py
         self.ev.red(f"{why}要用装有 {'、'.join(p for _, p in need)} 的 Python，"
-                    "本机的 Python 都装不上（可以装 Python 3.12 再试：winget install Python.Python.3.12）")
+                    "本机的 Python 都装不上（可以装 Python 3.12 再试：winget install -e --id Python.Python.3.12 --source winget）")
         return ""
 
     def _d2r(self) -> bool:
@@ -588,7 +588,7 @@ class Backend(BaseBackend):
             return False
         if not self.zstd():
             self.ev.red("抽出着色器要用 zstd 程序（时之笛的 RomFS 里有不带字典的 zstd 文件），这台电脑上没有："
-                        "在“环境”页一键安装（或 winget install Meta.Zstandard），然后重新构建")
+                        "在“环境”页一键安装（或 winget install -e --id Meta.Zstandard --source winget），然后重新构建")
             return False
         s = self.split
         s.mkdir(parents=True, exist_ok=True)

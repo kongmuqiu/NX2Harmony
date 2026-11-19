@@ -4,6 +4,10 @@
 
 版本号格式：主版本.次版本.修订。每个版本注明它能构建的游戏版本（见 `games.tsv`）。
 
+## 0.1.3 · 2026-11-19 · 一键安装只走 winget 社区源
+
+- **一键安装 Python、Docker Desktop（以及 Git、zstd、PowerShell、Java）加上 `--source winget`**：以前不指定源，winget 会连同微软商店源一起查；商店源会把服务器证书和固定值比对，玩家电脑上有加速器、杀毒软件的 HTTPS 扫描或代理替换了证书时，整次安装就以退出码 0x8A15005E（服务器证书与任何预期值都不匹配）失败，虽然要装的包本来就在 winget 社区源里。“环境”页、命令行和 `一键安装环境.cmd` 给玩家看的手动安装命令也都带上了 `--source winget`；安装说明的错误对照表加了这一行。
+
 ## 0.1.2 · 2026-11-18 · 后端源码进了本仓库
 
 - **三个游戏后端的源码在本仓库的 `backends/` 里**：`NativeGames-harmonyos`（王国之泪）、`LZA`（Z-A）、`OOT`（时之笛），都是从各自工程导入的副本。游戏本身的工作仍在各后端自己的工程里做，再用 `packaging/backend_import.py` 导入；NX2 自己的改动记成补丁，放在维护者电脑上的 `backends/patches/`（不进提交：补丁里引着原工程被改掉的行）。`backends/SOURCES.tsv` 记着每个文件夹从哪来，并固定 totk-android 和 nxnative 的提交（这两个用时再取，不拷进来）；预编译的 libopus / libvpx 在 `backends/prebuilt-ohos`。说明见 [backends/README.md](backends/README.md)。
@@ -36,6 +40,10 @@
 ## English
 
 Versions are major.minor.patch. Each names the game versions it can build (see `games.tsv`).
+
+### 0.1.3 · 2026-11-19 · one-click installs from the winget source only
+
+- **The one-click installs of Python, Docker Desktop (and Git, zstd, PowerShell, Java) add `--source winget`**: without a source winget searched the Microsoft Store source too, which checks its server certificate against fixed values; on a player's PC where an accelerator, an antivirus's HTTPS scanning or a proxy replaces certificates the whole install failed with exit code 0x8A15005E (the server certificate did not match any of the expected values), although the package is in the winget source. The commands the Environment page, the command line and `一键安装环境.cmd` give the player for a manual install carry `--source winget` too, and the install guide's error table has the row.
 
 ### 0.1.2 · 2026-11-18 · the backends' sources in this repository
 

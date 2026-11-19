@@ -66,7 +66,7 @@ python nx2h.py setup
 
 - `python -V` has to print Python 3.9 or newer. If it prints nothing, opens the Microsoft Store or says Python was not
   found, the `python` on this PC is only the Microsoft Store alias: Python is missing. The player then runs
-  `winget install Python.Python.3.12` and opens a new terminal. `一键安装环境.cmd` does not help here: it installs
+  `winget install -e --id Python.Python.3.12 --source winget` and opens a new terminal. `一键安装环境.cmd` does not help here: it installs
   Python only when `where python` finds none, and the Store alias counts as found, so it skips the install and then fails.
 - When the import line fails: `python -m pip install -r requirements.txt` (PySide6 and cryptography, about 80 MB;
   `NX2Harmony.cmd` installs the same on its first start). `setup` does not check these two, but the build needs them:
@@ -302,7 +302,7 @@ the build.
 | `里还有别的游戏文件，建不了硬链接` | The build needs that file in a folder of its own and could neither link nor copy it there: ask the player to put that file alone in a folder (or free space for the copy). |
 | `不是 v131072 的游戏文件` | Ocarina of Time's modules do not match: another version or a damaged NUP. The message names the unpacked folder to delete; then build with the right NUP. |
 | `要解开的 NUP 没找到` | The `.nup` is not in the folders given: pass the folder that holds it. |
-| `的 Python，本机的 Python 都装不上` | Ocarina of Time: no Python on this PC could install the packages the message names. The player installs Python 3.12 (`winget install Python.Python.3.12`); then run the build again. |
+| `的 Python，本机的 Python 都装不上` | Ocarina of Time: no Python on this PC could install the packages the message names. The player installs Python 3.12 (`winget install -e --id Python.Python.3.12 --source winget`); then run the build again. |
 | `抽出着色器要用 zstd 程序` | `setup --fix` (winget `Meta.Zstandard`), then build again. |
 | `缺 nxnative 仓库` | Ocarina of Time needs nxnative (step 1). |
 | `编译 libopus 需要 PowerShell 7` | `setup --fix` (winget `Microsoft.PowerShell`). |
@@ -320,7 +320,8 @@ the build.
 | `这台电脑还没有为 <bundle> 签过名` | Run the build again: it asks for the signing first. |
 | `安装失败：<hdc's message>` | A signature or profile message: the phone is not in the profile (connect it and build again), or an app with the same bundle name but another signature is installed. Uninstalling that one deletes its saves: ask the player first. |
 | `缺少要推送的文件`, `发送 <file> 失败` | Run again with the phone on the cable, and check that the phone has room (step 2). |
-| `构建要用本机的 Python 3.9 或更新版本来运行后端脚本` | Packed app only: install Python (`setup --fix`, or `winget install Python.Python.3.12`), then open the app again. |
+| `构建要用本机的 Python 3.9 或更新版本来运行后端脚本` | Packed app only: install Python (`setup --fix`, or `winget install -e --id Python.Python.3.12 --source winget`), then open the app again. |
+| `自动安装没成功：退出码 0x8A15005E` | winget's Microsoft Store source refused a replaced HTTPS certificate (an accelerator, an antivirus's HTTPS scanning, a proxy on the player's PC). 0.1.3 and later install from the winget source only; with an older version have the player run `winget install -e --id <package> --source winget` (the package the row names) in a terminal. |
 | `要写成 宽x高（像素），比如 2848x1320` | Give `--screen` as width x height in pixels (exit code 2). |
 
 If step 6 has no answer, the player can open an issue with this project's build-problem form
