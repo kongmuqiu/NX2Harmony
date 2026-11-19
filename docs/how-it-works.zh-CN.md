@@ -133,7 +133,7 @@ NX2Harmony 多了三种，nxnative 的前端可以忽略：
 | `signing` | `bundle`、`project`、`opened` | 后台签名失败：给 DevEco Studio 用的签名工程，以及是否已经打开 |
 | `awake` | `on`、`target`、`server`、`restore` | 手机开始（或不再）保持亮屏；前端如果中途杀掉构建，要用 hdc 在那台手机上运行 `restore` |
 
-`nx2h setup --progress json` 把每项检查报告为 `{"ev": "check", "key", "label", "ok", "detail", "how", "fixable"}`（只是信息的行，`ok` 为 `null`）。
+`nx2h setup --progress json` 把每项检查报告为 `{"ev": "check", "key", "label", "ok", "detail", "how", "fixable", "verb"}`（只是信息的行，`ok` 为 `null`；`verb` 是自动修复做的事：`安装` 或 `启动`）。
 
 ```
 {"ev": "game", "t": 1763370000.0, "title_id": "0100F2C0115B6000", "name": "塞尔达传说 王国之泪", "version": "1.4.3", "bundle_id": "nx2h.uk3f9a2.totk", "out": "…\\artifacts\\release\\nx2h-20261117-1015\\totk-harmonyos-nx2h-20261117-1015-signed.hap", "icon": null}

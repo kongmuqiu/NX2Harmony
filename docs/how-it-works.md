@@ -133,7 +133,7 @@ NX2Harmony adds three, which an nxnative front end may ignore:
 | `signing` | `bundle`, `project`, `opened` | background signing failed: the signing project for DevEco Studio, and whether it was opened |
 | `awake` | `on`, `target`, `server`, `restore` | the phone's screen is held on (or no longer); a front end that kills the build runs `restore` on that phone with hdc |
 
-`nx2h setup --progress json` reports each check as `{"ev": "check", "key", "label", "ok", "detail", "how", "fixable"}` (`ok` is `null` for a row that is only information).
+`nx2h setup --progress json` reports each check as `{"ev": "check", "key", "label", "ok", "detail", "how", "fixable", "verb"}` (`ok` is `null` for a row that is only information; `verb` is what the automatic fix does: `安装` install or `启动` start).
 
 ```
 {"ev": "game", "t": 1763370000.0, "title_id": "0100F2C0115B6000", "name": "塞尔达传说 王国之泪", "version": "1.4.3", "bundle_id": "nx2h.uk3f9a2.totk", "out": "…\\artifacts\\release\\nx2h-20261117-1015\\totk-harmonyos-nx2h-20261117-1015-signed.hap", "icon": null}

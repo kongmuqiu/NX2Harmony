@@ -53,7 +53,8 @@ What is installed for you, when it is missing:
 | Item | When | How |
 |---|---|---|
 | Python 3.9 or newer | always: it runs the backends' scripts (the packed program carries a Python only for itself) | `winget install -e --id Python.Python.3.12 --source winget` |
-| Docker Desktop, running | always: the Linux tools run in containers | `winget install -e --id Docker.DockerDesktop --source winget`; the next **一键安装缺少的** (or `setup --fix`) starts it and waits up to 3 minutes. If it is still not ready, open it: it may need WSL 2 installed or Windows restarted |
+| WSL 2 | Docker Desktop runs in WSL 2; checked only while Docker Desktop is not running | `wsl --install --no-distribution` as administrator (the one-click install brings up Windows' prompt: answer Yes; it downloads from the Microsoft Store or GitHub). **Restart Windows** afterwards: until then the Docker Desktop row says to restart first, and the one-click install's progress marks it 等重启电脑 (wait for a restart) |
+| Docker Desktop, running | always: the Linux tools run in containers | `winget install -e --id Docker.DockerDesktop --source winget`; the one-click install then starts it and waits up to 5 minutes. Its first start asks you to accept its service agreement (Accept) in its window; signing in can be skipped. Installed but not running, the row says **可自动启动** (can start it) and the one-click install only starts it |
 | zstd | Ocarina of Time (its shader list) | `winget install -e --id Meta.Zstandard --source winget` |
 | PowerShell 7 | only to build libopus when no prebuilt one is there (`backends\prebuilt-ohos` brings one, in a checkout and in the full package) | `winget install -e --id Microsoft.PowerShell --source winget` |
 | Git | only for a source checkout whose reference project totk-android must be cloned | `winget install -e --id Git.Git --source winget` |
@@ -66,7 +67,7 @@ What you do yourself:
 - **nxnative**, for Ocarina of Time when you run from source: clone [nxnative](https://github.com/seedds/nxnative) into `backends\nxnative` or beside this repository and check out the commit `backends/SOURCES.tsv` names, or name its place as `"nxnative"` in `nx2h.local.json`. The game backends themselves, NativeGames-harmonyos (Tears of the Kingdom), LZA (Z-A) and OOT (Ocarina of Time), are part of the checkout, in `backends\`; the full package carries them, nxnative and totk-android in its own `backends\`. Without a backend, its game is recognized but not built.
 
 Starting the program:
-- **Packed:** `NX2Harmony.exe` in the NX2Harmony folder: the full package from this repository's Releases page (`NX2Harmony-0.1.3-windows-x64-full.zip`, unzip it anywhere), or `dist\NX2Harmony` after packing. The folder is portable: copy it anywhere and its settings go with it in `data\`. `nx2h.exe` beside it is the command line.
+- **Packed:** `NX2Harmony.exe` in the NX2Harmony folder: the full package from this repository's Releases page (`NX2Harmony-0.1.4-windows-x64-full.zip`, unzip it anywhere), or `dist\NX2Harmony` after packing. The folder is portable: copy it anywhere and its settings go with it in `data\`. `nx2h.exe` beside it is the command line.
 - **From source:** with Python 3.9 or newer installed, double-click `NX2Harmony.cmd`. Its first start installs PySide6 and cryptography from `requirements.txt` (about 80 MB).
 - **Packing it yourself:** `python packaging/build.py`, in a Python with the packages of `packaging/requirements-build.txt` (PyInstaller, PySide6-Essentials, Pillow, cryptography). The result is `dist\NX2Harmony`; its `data\` is kept across packings. A full package for a clean PC: `python packaging/full_bundle.py --out <folder> [--zip]` ([how-it-works.md](how-it-works.md#the-full-package)).
 
@@ -201,6 +202,15 @@ The messages are in Chinese; the table gives how each begins.
 | `后台签名没成功` (background signing failed) | Check the Huawei account (developer, real-name verified) and build again, or sign in DevEco Studio ([Signing](#signing)). |
 | `Docker 镜像 … 都没拉下来`, `… 建了 … 次都没成功` (image) | The network: build again later. |
 | `…这一步要用 Docker Desktop` | Start Docker Desktop (the Environment page installs and starts it). |
+| Docker Desktop shows `WSL not installed`; a Windows window says WSL must be updated and to press any key to install it; `没有 WSL 2…` (no WSL 2) | WSL 2 is missing: press **一键安装缺少的** on the Environment page (or open Terminal (Admin) from the Start button's right-click menu, Windows PowerShell (Admin) on Windows 10, and run `wsl --install --no-distribution`; pressing a key in that Windows window does the same), then restart Windows. |
+| `WSL 刚装好，要重启电脑后才能用`, `Docker Desktop 安装时打开了 Windows 的虚拟化组件，要重启电脑后才能用` (works after a restart; marked 等重启电脑) | Restart Windows, open the program and press **一键安装缺少的** again: it starts Docker Desktop. |
+| `Windows 的“虚拟机平台”没打开` (Virtual Machine Platform off), `Windows 的“适用于 Linux 的 Windows 子系统”没打开` (the WSL feature off, Windows 10) | Install WSL on the Environment page (it turns it on), then restart Windows. |
+| `Windows 的虚拟机监控程序没在运行` (the hypervisor does not run) | Restart Windows first. If that does not help, an Android emulator or a game may have turned it off: run `bcdedit /set hypervisorlaunchtype auto` in Terminal (Admin) (Windows PowerShell (Admin) on Windows 10), then restart Windows. |
+| `Windows 的 Server 服务（LanmanServer）被禁用了` (the Server service is disabled) | Tools that close port 445 disable it, and Docker Desktop needs it: in `services.msc` set "Server" to Automatic and start it, then open Docker Desktop. |
+| `Docker Desktop 的服务协议还没接受` (agreement not accepted) | Open Docker Desktop and press Accept; signing in can be skipped. |
+| `Windows 在等重启` (Windows waits for a restart) | Restart Windows, then press **一键安装缺少的** again. |
+| `电脑的 BIOS/UEFI 里没开虚拟化` (virtualization off) | Turn on Intel VT-x (Intel Virtualization Technology) or AMD SVM in the BIOS/UEFI, then start Docker Desktop. |
+| `Docker Desktop 5 分钟内没有就绪`, `Docker Desktop 打开后又退出了` (not ready, or closed again) | Read what Docker Desktop's window says and do that; once it shows Engine running at the bottom left, press **重新检查**. |
 | `本体是 eShop 版…不带系统字体` (no fonts) | Put the firmware dumped from your own console next to the `prod.keys` folder, or one of your own game card images (`.xci`, not necessarily of this game) in the game folder. |
 | `还没有参考仓库 totk-android`, `…不在固定提交` (reference) | On the Environment page, fix the row **参考仓库 totk-android 在固定提交** (reference repository at its pinned commit), or run `python native-harmonyos/upstream.py --update` in the backend. |
 | `软件包自带的参考仓库 totk-android 缺失或不完整` | Unpack your copy of the full package again, completely, to the same place (or download it again from this repository's Releases page). |

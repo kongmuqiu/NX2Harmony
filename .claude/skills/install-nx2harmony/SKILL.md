@@ -76,17 +76,22 @@ python nx2h.py setup
   account row, which the first build settles by itself, and the `prod.keys` row, for which `-k` on the build is enough
   (see the table).
 
-`python nx2h.py setup --fix` installs or starts what it can and then shows the rows again. It runs winget (the UAC
-prompts are the player's to answer), waits up to 3 minutes for Docker Desktop to come up and, once the tools the signing
+`python nx2h.py setup --fix` installs or starts what it can and then shows the rows again. It can take a long time
+(the WSL download, the Docker Desktop install, up to 5 minutes for Docker Desktop to come up): run it detached or
+with a long timeout and never kill it midway, or what it installed is not recorded. It runs winget (the UAC
+prompts are the player's to answer), waits up to 5 minutes for Docker Desktop to come up and, once the tools the signing
 needs are there, opens the Huawei login page in the browser when the account is not logged in yet. Installing Docker
-Desktop can take a while, and its first start may ask for WSL 2 or a restart.
+Desktop can take a while. Without WSL 2 it installs WSL first (`wsl --install --no-distribution`, a UAC prompt) and
+then asks for a restart of Windows before Docker Desktop can start; Docker Desktop's first start asks the player to
+accept its service agreement in its window.
 
 | Row | When it shows `✗` |
 | --- | --- |
 | `Windows 10/11 x64` | No other system is supported. Stop. |
 | `程序位置` (only on a network location) | Copy the whole NX2Harmony folder to a local disk and run it from there. |
 | `Python 3.9 或更新（运行构建脚本）` | `setup --fix` (winget `Python.Python.3.12`). From source the row reports the Python that runs `setup`; it matters mostly for the packed app. |
-| `Docker Desktop 在运行` | `setup --fix` installs Docker Desktop, or starts it when it is installed (`已安装但没在运行`) and waits for it. If it still does not come up, the player opens it and waits until it runs. |
+| `WSL 2（Docker Desktop 要用）` (only while Docker Desktop is not running) | `setup --fix` runs `wsl --install --no-distribution` (`wsl --update` for one too old) as administrator: the player answers the UAC prompt. Then the row ends in `重启电脑后才能用`: the player restarts Windows and runs `setup --fix` again. |
+| `Docker Desktop 在运行` | `setup --fix` installs Docker Desktop and starts it, or only starts it when it is installed (`已安装但没在运行`), and waits up to 5 minutes. `（还没接受它的服务协议）`: the player presses Accept in Docker Desktop's window (signing in can be skipped). If it still does not come up, the player opens it and does what its window says. |
 | `DevEco Studio 和 HarmonyOS SDK` | The player installs DevEco Studio from <https://developer.huawei.com/consumer/cn/deveco-studio/>, logs in with the Huawei account and opens it once so it downloads the HarmonyOS SDK, which can take a while. hdc comes with it. `缺 SDK`: open DevEco Studio again and let the download finish. |
 | `Java（签名和打包用）` (only with a toolchain that has no Java of its own) | `setup --fix` (winget `Microsoft.OpenJDK.21`). |
 | `<game> 后端（<folder>）` | That game's backend is missing: see "The backends" below. |
@@ -295,7 +300,14 @@ the build.
 | `还没有参考仓库 totk-android`, `参考仓库 totk-android 不在固定提交`, `检查参考仓库 totk-android 失败` | `python nx2h.py setup --fix`. Ask before anything discards local changes in that checkout. |
 | `软件包自带的参考仓库 totk-android 缺失或不完整` | The full package's own copy is damaged or incomplete: the player unpacks their copy of the package again, completely, in the same place, or downloads it again from this repository's Releases page; never look for one anywhere else. |
 | `这一步要用 Docker Desktop（在“环境”页安装并启动）` | Docker Desktop is not installed or not running: `setup --fix`. |
-| `Docker Desktop 3 分钟内没有就绪` (from `setup --fix`) | The player opens Docker Desktop: it may need WSL 2 installed or a restart. |
+| `没有 WSL 2…`, or Docker Desktop shows `WSL not installed` | `setup --fix` installs WSL 2 (a UAC prompt), then the player restarts Windows. |
+| `WSL 刚装好，要重启电脑后才能用`, `Docker Desktop 安装时打开了 Windows 的虚拟化组件…`, `Windows 在等重启` (`setup --fix` prints `等重启：`) | Not a failure: the player restarts Windows, then `setup --fix` again, which starts Docker Desktop. |
+| `Windows 的“虚拟机平台”没打开`, `Windows 的“适用于 Linux 的 Windows 子系统”没打开` (Windows 10) | `setup --fix` (the WSL row turns it on), then the player restarts Windows. |
+| `Windows 的虚拟机监控程序没在运行` | The player restarts Windows; if it persists, an Android emulator or a game turned it off and the player runs `bcdedit /set hypervisorlaunchtype auto` as administrator and restarts. Never run it for them. |
+| `Windows 的 Server 服务（LanmanServer）被禁用了` | The player sets the Server service to Automatic in `services.msc` and starts it. Never change it for them. |
+| `Docker Desktop 的服务协议还没接受` | The player presses Accept in Docker Desktop's window. |
+| `电脑的 BIOS/UEFI 里没开虚拟化` | The player turns on Intel VT-x or AMD SVM in the firmware settings; never change it for them. |
+| `Docker Desktop 5 分钟内没有就绪`, `Docker Desktop 打开后又退出了` (from `setup --fix`) | The player opens Docker Desktop and does what its window says. |
 | `Docker 镜像 <image> 建了 <N> 次都没成功`, `Docker 镜像 <image> 从 <N> 个下载源都没拉下来`, or a step whose log ends in download errors | The network: run again once it works (finished steps are skipped). A proxy for Docker is the player's setting in Docker Desktop. |
 | `<step> 失败（退出码 N），日志：<log file>` | Read the end of that log. With `hap 失败`, an SDK error means DevEco Studio's SDK is incomplete; a failed audit is never worked around: report it. |
 | `运行结束但没有产出预期的文件` | Read that step's log and run once more; if it happens again, report it. |

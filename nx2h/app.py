@@ -1017,7 +1017,17 @@ class MainWindow(QMainWindow):
             os.startfile(str(path))   # Explorer, a window of its own (no console)
 
     # ----- 环境 -----
-    FIX_MARKS = {"run": ("正在安装", "opt"), "ok": ("已装好", "ok"), "bad": ("没装好", "bad"), "skip": ("已跳过", "")}
+    FIX_MARKS = {"run": ("正在安装", "opt"), "ok": ("已装好", "ok"), "bad": ("没装好", "bad"), "skip": ("已跳过", ""),
+                 "wait": ("等重启电脑", "warn")}
+    START_MARKS = {"run": "正在启动", "ok": "已启动", "bad": "没启动起来"}   # a fix that starts a program (Docker Desktop)
+
+    def verb_of(self, name: str) -> str:
+        """What the fix of the check called `name` does: 安装 (install) or 启动 (start)."""
+        return next((c.get("verb") or "安装" for c in self.checks if c["label"] == name), "安装")
+
+    def fix_mark(self, st: str, name: str):
+        text, kind = self.FIX_MARKS[st]
+        return (self.START_MARKS.get(st, text) if self.verb_of(name) == "启动" else text), kind
 
     def _setup_page(self):
         sc, v = page()
@@ -1117,9 +1127,9 @@ class MainWindow(QMainWindow):
         if kind == "item":
             self.fix_state[n["label"]] = "run"
             self.fix_lines.clear()
-            self.fix_now(f'正在安装：{n["label"]}（{n["n"]}/{n["of"]}）', "run")
-        elif kind in ("ok", "fail", "skip"):
-            self.fix_state[n["label"]] = {"ok": "ok", "fail": "bad", "skip": "skip"}[kind]
+            self.fix_now(f'正在{self.verb_of(n["label"])}：{n["label"]}（{n["n"]}/{n["of"]}）', "run")
+        elif kind in ("ok", "fail", "skip", "wait"):
+            self.fix_state[n["label"]] = {"ok": "ok", "fail": "bad", "skip": "skip", "wait": "wait"}[kind]
             if n.get("why"):
                 self.fix_why[n["label"]] = n["why"]
             self.render_fix_rows()
@@ -1133,10 +1143,10 @@ class MainWindow(QMainWindow):
         for name, st in self.fix_state.items():
             if st == "run":
                 continue
-            text, kind = self.FIX_MARKS[st]
+            text, kind = self.fix_mark(st, name)
             b = label(text, "badge")
             b.setProperty("kind", kind)
-            self.fix_rows.addWidget(row("" if st == "skip" else st, name, native(self.fix_why.get(name, "")), b))
+            self.fix_rows.addWidget(row("" if st in ("skip", "wait") else st, name, native(self.fix_why.get(name, "")), b))
 
     def fix_end(self, cs) -> None:
         """The install is over: the running row becomes the summary under the per-item results."""
@@ -1149,9 +1159,10 @@ class MainWindow(QMainWindow):
                 self.fix_state[name] = "bad"
         self.render_fix_rows()
         done = list(self.fix_state.values())
-        parts = [f"{done.count(s)} 项{t}" for s, t in (("ok", "装好了"), ("bad", "没装好"), ("skip", "跳过")) if done.count(s)]
+        parts = [f"{done.count(s)} 项{t}" for s, t in (("ok", "完成"), ("wait", "等重启电脑"), ("bad", "没成功"), ("skip", "跳过"))
+                 if done.count(s)]
         self.fix_now("安装结束：" + "，".join(parts) if parts else "没有能自动安装的项",
-                     "bad" if "bad" in done else ("ok" if parts else ""))
+                     "bad" if "bad" in done else ("" if "wait" in done or not parts else "ok"))
 
     def render_checks(self):
         """The check rows. During a one-click install the item being installed says so; a failed install says why."""
@@ -1159,8 +1170,9 @@ class MainWindow(QMainWindow):
         for i, c in enumerate(self.checks):
             mark = self.fix_state.get(c["label"]) if self.fixing else None
             right = None
+            verb = c.get("verb") or "安装"
             if mark or c["fixable"]:
-                text, kind = self.FIX_MARKS[mark] if mark else ("可自动安装", "warn")
+                text, kind = self.fix_mark(mark, c["label"]) if mark else (f"可自动{verb}", "warn")
                 right = label(text, "badge")
                 right.setProperty("kind", kind)
             link = WEB_LINK.search(c["how"] or "") if c["ok"] is False else None
@@ -1169,7 +1181,8 @@ class MainWindow(QMainWindow):
             state = "run" if mark == "run" else ("ok" if c["ok"] else ("" if c["ok"] is None else "bad"))
             why = self.fix_why.get(c["label"], "") if c["ok"] is False else ""
             if why:
-                why = ("跳过：" if self.fix_state.get(c["label"]) == "skip" else "自动安装没成功：") + why
+                st = self.fix_state.get(c["label"])   # waiting for a restart: the row's own line says what to do
+                why = "" if st == "wait" else ("跳过：" if st == "skip" else f"自动{verb}没成功：") + why
             self.checks_box.addWidget(row(state, c["label"], native(c["detail"]), right, native(c["how"]),
                                           last=i == len(self.checks) - 1, err=native(why)))
 
@@ -1177,6 +1190,8 @@ class MainWindow(QMainWindow):
         fixing, self.fixing = self.fixing, False
         self.re_btn.setEnabled(True)
         if fixing:
+            if not isinstance(cs, Exception):
+                self.checks = cs   # the words for each item (installed, or started) as things are now
             self.fix_end(cs)
         if isinstance(cs, Exception):
             clear(self.checks_box)

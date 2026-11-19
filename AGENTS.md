@@ -14,8 +14,8 @@ own projects; `backends/` holds the copies NX2Harmony builds with (`backends/REA
 - The full package (the packed app plus the game backends' sources, no game content) comes only from this
   repository's Releases page. Never look for it anywhere else; when one is needed, use the player's copy or that page.
 - Ask the player which folder holds their game files before looking; list file names only, never whole drives.
-- The player does the account steps (Huawei sign-in in the browser, DevEco Studio, prompts on the phone, and WSL 2 or a
-  restart if Docker Desktop asks for one). Back up saves before anything that uninstalls the app.
+- The player does the account steps (Huawei sign-in in the browser, DevEco Studio, prompts on the phone), answers
+  Windows' administrator prompts (winget, WSL 2) and restarts Windows after `setup --fix` installed WSL 2. Back up saves before anything that uninstalls the app.
 - Reply in the player's language.
 
 For changes to the code itself: `README.md` describes the layout, `CONTRIBUTING.md` the rules (game-specific work belongs

@@ -4,6 +4,12 @@
 
 版本号格式：主版本.次版本.修订。每个版本注明它能构建的游戏版本（见 `games.tsv`）。
 
+## 0.1.4 · 2026-11-19 · 一键安装 WSL 2，Docker Desktop 装好后接着启动
+
+- **“环境”页新增「WSL 2（Docker Desktop 要用）」**：Docker Desktop 没在运行时才检查。没有 WSL 时 Docker Desktop 起不来（“WSL not installed”），Windows 11 24H2 自带的 wsl.exe 只会弹“按任意键安装”。检查读注册表和系统信息，不运行 wsl.exe；一键安装弹一次管理员确认，运行 `wsl --install --no-distribution`（太旧的用 `wsl --update`）。装完要重启电脑：这一项不算失败，进度里标“等重启电脑”，软件关掉再打开也记得，直到电脑重启过。
+- **Docker Desktop 一行**：已安装但没在运行时写“可自动启动”和怎么打开它，不再叫你用 winget 安装；没装时一键安装装好后接着启动它，最多等 5 分钟。启动前先查要重启、缺 WSL、“虚拟机平台”没开、BIOS 没开虚拟化、Windows 的虚拟机监控程序没在运行，直接说出来；起不来时说明是 Server 服务被禁用、服务协议没接受，还是它打开后又退出了。winget 安装时已经接受的服务协议也认。也能找到装在别处（只给当前用户，或另选文件夹）的 Docker Desktop。
+- 安装说明、AI 安装说明、README：WSL 2 由一键安装来装，你只要点确认、重启电脑；错误对照表加了上面这些提示。
+
 ## 0.1.3 · 2026-11-19 · 一键安装只走 winget 社区源
 
 - **一键安装 Python、Docker Desktop（以及 Git、zstd、PowerShell、Java）加上 `--source winget`**：以前不指定源，winget 会连同微软商店源一起查；商店源会把服务器证书和固定值比对，玩家电脑上有加速器、杀毒软件的 HTTPS 扫描或代理替换了证书时，整次安装就以退出码 0x8A15005E（服务器证书与任何预期值都不匹配）失败，虽然要装的包本来就在 winget 社区源里。“环境”页、命令行和 `一键安装环境.cmd` 给玩家看的手动安装命令也都带上了 `--source winget`；安装说明的错误对照表加了这一行。
@@ -40,6 +46,12 @@
 ## English
 
 Versions are major.minor.patch. Each names the game versions it can build (see `games.tsv`).
+
+### 0.1.4 · 2026-11-19 · one-click WSL 2, and Docker Desktop started once installed
+
+- **A new row on the Environment page, 「WSL 2（Docker Desktop 要用）」**, checked while Docker Desktop is not running. Without WSL Docker Desktop does not start ("WSL not installed"), and Windows 11 24H2's own wsl.exe only offers to install it on a key press. The row reads the registry and Windows' system information and never runs wsl.exe; the one-click install asks for administrator rights once and runs `wsl --install --no-distribution` (`wsl --update` for one too old). Windows must restart afterwards: that is not a failure, the progress marks it 等重启电脑 (wait for a restart), and the program remembers it across reopening until Windows has restarted.
+- **The Docker Desktop row**: installed but not running, it says 可自动启动 (can start it) and how to open it, no longer to install it with winget; missing, the one-click install installs it and then starts it, waiting up to 5 minutes. Before starting it says what stops it (a restart due, WSL missing, the Virtual Machine Platform off, virtualization off in the firmware, the hypervisor not running); when it does not come up, whether the Server service is disabled, the service agreement not accepted, or it closed again. The agreement accepted by winget's install counts. A Docker Desktop installed for the current user only, or in another folder, is found too.
+- The install guides, the AI install skill and the README: the one-click install installs WSL 2, you answer its prompt and restart Windows; the error tables have the messages above.
 
 ### 0.1.3 · 2026-11-19 · one-click installs from the winget source only
 

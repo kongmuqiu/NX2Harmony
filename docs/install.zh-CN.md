@@ -53,7 +53,8 @@
 | 项 | 什么时候需要 | 怎么装 |
 |---|---|---|
 | Python 3.9 或更新 | 总要：运行后端的脚本（打包版自带的 Python 只给软件自己用） | `winget install -e --id Python.Python.3.12 --source winget` |
-| Docker Desktop，并在运行 | 总要：Linux 工具在容器里运行 | `winget install -e --id Docker.DockerDesktop --source winget`；再点一次「一键安装缺少的」（或 `setup --fix`）会启动它，最多等 3 分钟。还没就绪就打开它看看，可能要先装 WSL 2 或重启 Windows |
+| WSL 2 | Docker Desktop 在 WSL 2 里运行；只在 Docker Desktop 没在运行时检查 | 管理员身份运行 `wsl --install --no-distribution`（一键安装会弹出 Windows 的确认，点“是”；从微软商店或 GitHub 下载）。装完要**重启电脑**：重启前 Docker Desktop 那一行写着要先重启，一键安装的进度里它标着“等重启电脑” |
+| Docker Desktop，并在运行 | 总要：Linux 工具在容器里运行 | `winget install -e --id Docker.DockerDesktop --source winget`；一键安装装好后接着启动它，最多等 5 分钟。第一次打开要在它的窗口里点 Accept 接受服务协议，登录可以跳过。已装好但没在运行时这一行写着「可自动启动」，点「一键安装缺少的」只启动它 |
 | zstd | 时之笛（着色器清单） | `winget install -e --id Meta.Zstandard --source winget` |
 | PowerShell 7 | 只在没有预编译 libopus、要自己编译时（`backends\prebuilt-ohos` 里自带一份，源码和完整包都有） | `winget install -e --id Microsoft.PowerShell --source winget` |
 | Git | 只在从源码运行、参考仓库 totk-android 要克隆时 | `winget install -e --id Git.Git --source winget` |
@@ -66,7 +67,7 @@
 - **nxnative**（从源码运行、构建时之笛时）：把 [nxnative](https://github.com/seedds/nxnative) 克隆到 `backends\nxnative` 或本仓库旁边，检出 `backends/SOURCES.tsv` 记的提交；也可以在 `nx2h.local.json` 里写成 `"nxnative"`。游戏后端本身，NativeGames-harmonyos（王国之泪）、LZA（Z-A）、OOT（时之笛），就在仓库的 `backends\` 里；完整包把它们连同 nxnative 和 totk-android 都放在自己的 `backends\` 里。缺后端时，对应的游戏能识别，但不能构建。
 
 打开软件：
-- **打包版：** NX2Harmony 文件夹里的 `NX2Harmony.exe`：本仓库 Releases 页面上的完整包（`NX2Harmony-0.1.3-windows-x64-full.zip`，解压到任意位置），或打包后的 `dist\NX2Harmony`。整个文件夹是便携的，拷到哪里，设置都在 `data\` 里跟着走。旁边的 `nx2h.exe` 是命令行版。
+- **打包版：** NX2Harmony 文件夹里的 `NX2Harmony.exe`：本仓库 Releases 页面上的完整包（`NX2Harmony-0.1.4-windows-x64-full.zip`，解压到任意位置），或打包后的 `dist\NX2Harmony`。整个文件夹是便携的，拷到哪里，设置都在 `data\` 里跟着走。旁边的 `nx2h.exe` 是命令行版。
 - **从源码：** 装好 Python 3.9 或更新版本后，双击 `NX2Harmony.cmd`。第一次打开时会装 `requirements.txt` 里的 PySide6 和 cryptography（约 80 MB）。
 - **自己打包：** 在装了 `packaging/requirements-build.txt` 里那些包（PyInstaller、PySide6-Essentials、Pillow、cryptography）的 Python 里运行 `python packaging/build.py`。结果在 `dist\NX2Harmony`，里面的 `data\` 重新打包时会保留。给一台全新电脑用的完整包：`python packaging/full_bundle.py --out <文件夹> [--zip]`（见 [how-it-works.zh-CN.md](how-it-works.zh-CN.md#完整包)）。
 
@@ -199,6 +200,15 @@ DevEco Studio 要装着，但不用打开。用的是 DevEco Studio 自动签名
 | `后台签名没成功` | 检查华为账号（开发者、已实名认证）后再构建，或在 DevEco Studio 里签（见[签名](#签名)）。 |
 | `Docker 镜像 … 都没拉下来`、`… 建了 … 次都没成功` | 网络问题：过一会儿再构建。 |
 | `…这一步要用 Docker Desktop` | 启动 Docker Desktop（“环境”页会装好并启动）。 |
+| Docker Desktop 弹出 `WSL not installed`；Windows 的窗口说“适用于 Linux 的 Windows 子系统必须更新…按任意键安装”；`没有 WSL 2…` | 缺 WSL 2：在“环境”页点「一键安装缺少的」（或右键开始菜单打开“终端(管理员)”，Windows 10 是“Windows PowerShell(管理员)”，运行 `wsl --install --no-distribution`；在 Windows 那个窗口里按一下键也一样），装完重启电脑。 |
+| `WSL 刚装好，要重启电脑后才能用`、`Docker Desktop 安装时打开了 Windows 的虚拟化组件，要重启电脑后才能用`（标着“等重启电脑”） | 重启电脑，打开软件再点「一键安装缺少的」，它会启动 Docker Desktop。 |
+| `Windows 的“虚拟机平台”没打开`、`Windows 的“适用于 Linux 的 Windows 子系统”没打开`（Windows 10） | 在“环境”页装 WSL（会打开它），然后重启电脑。 |
+| `Windows 的虚拟机监控程序没在运行` | 先重启电脑。还不行的话，安卓模拟器或某些游戏可能把它关了：在“终端(管理员)”（Windows 10 是“Windows PowerShell(管理员)”）里运行 `bcdedit /set hypervisorlaunchtype auto`，再重启电脑。 |
+| `Windows 的 Server 服务（LanmanServer）被禁用了` | 关 445 端口的工具常会禁用它，Docker Desktop 要用：在 `services.msc` 里把“Server”设成自动并启动，再打开 Docker Desktop。 |
+| `Docker Desktop 的服务协议还没接受` | 打开 Docker Desktop，点 Accept；登录可以跳过。 |
+| `Windows 在等重启` | 重启电脑后再点「一键安装缺少的」。 |
+| `电脑的 BIOS/UEFI 里没开虚拟化` | 进 BIOS/UEFI 打开 Intel VT-x（Intel Virtualization Technology）或 AMD SVM，再启动 Docker Desktop。 |
+| `Docker Desktop 5 分钟内没有就绪`、`Docker Desktop 打开后又退出了` | 看 Docker Desktop 窗口里的提示，按它说的做；左下角显示 Engine running 后点「重新检查」。 |
 | `本体是 eShop 版…不带系统字体` | 把你从自己主机导出的固件放在 `prod.keys` 所在文件夹旁边，或在游戏文件夹里放一张你自己的游戏卡带镜像（`.xci`，不必是这个游戏的）。 |
 | `还没有参考仓库 totk-android`、`…不在固定提交` | 在“环境”页修复「参考仓库 totk-android 在固定提交」那一行，或在后端里运行 `python native-harmonyos/upstream.py --update`。 |
 | `软件包自带的参考仓库 totk-android 缺失或不完整` | 把你手上那份完整包完整地重新解压到原处（或从本仓库的 Releases 页面重新下载）。 |

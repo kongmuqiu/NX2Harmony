@@ -62,7 +62,7 @@ def checks_json(fix: bool = False) -> list:
     if fix and any(c.ok is False and c.fix for c in cs):
         cs = doctor.fix(cs)
     return [{"key": c.key, "label": c.label, "ok": c.ok, "detail": c.detail, "how": c.how if c.ok is False else "",
-             "fixable": bool(c.fix) and c.ok is False} for c in cs]
+             "fixable": bool(c.fix) and c.ok is False, "verb": c.verb} for c in cs]
 
 
 def keys_folder() -> str:
